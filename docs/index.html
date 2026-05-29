@@ -231,7 +231,7 @@ const peak25 = DATA.ts.ICN_2025.reduce((a,b)=>a.pax>b.pax?a:b);
 const low25 = DATA.ts.ICN_2025.reduce((a,b)=>a.pax<b.pax?a:b);
 const kpis = [
   {label:'2025 총 여객 (국제선)', value:fmtShort(t.pax_25), unit:'명', delta:`도시 ${t.city_count}개`, cls:'dim'},
-  {label:'26년 1~4월 YoY', value:`${t.yoy>=0?'+':''}${t.yoy.toFixed(1)}`, unit:'%', delta:`${fmt(t.pax_25_q14)} → ${fmt(t.pax_26_q14)}`, cls:t.yoy>=0?'up':'down'},
+  {label:'YoY (26 1~4월 vs 25 1~4월)', value:`${t.yoy>=0?'+':''}${t.yoy.toFixed(1)}`, unit:'%', delta:`${fmt(t.pax_25_q14)} → ${fmt(t.pax_26_q14)}`, cls:t.yoy>=0?'up':'down'},
   {label:'팀 (권역) 수', value:`${DATA.teams.length}`, unit:'개', delta:'T&A 사업실 분류', cls:'dim'},
   {label:'최성수기 (ICN 25)', value:`${peak25.month}`, unit:'월', delta:`${fmtShort(peak25.pax)}명`, cls:'dim'},
   {label:'최비수기 (ICN 25)', value:`${low25.month}`, unit:'월', delta:`${fmtShort(low25.pax)}명`, cls:'dim'},
@@ -317,16 +317,18 @@ DATA.teams.forEach((team, ti) => {
   const peakMonth = team.months_25.indexOf(Math.max(...team.months_25))+1;
   const lowMonth = team.months_25.indexOf(Math.min(...team.months_25))+1;
   const topCities = team.cities.slice(0,3);
-  const growingCities = team.cities.filter(c => c.yoy !== null && c.pax_25_q14 > 50000).sort((a,b)=>b.yoy-a.yoy).slice(0,3);
-  const decliningCities = team.cities.filter(c => c.yoy !== null && c.pax_25_q14 > 50000).sort((a,b)=>a.yoy-b.yoy).slice(0,3);
+  // YoY 성장/하락 — 진짜 양수/음수만 필터 (이전엔 단순 정렬해서 다 양수여도 "하락"으로 표시되는 버그)
+  const growingCities = team.cities.filter(c => c.yoy !== null && c.pax_25_q14 > 50000 && c.yoy > 0).sort((a,b)=>b.yoy-a.yoy).slice(0,3);
+  const decliningCities = team.cities.filter(c => c.yoy !== null && c.pax_25_q14 > 50000 && c.yoy < 0).sort((a,b)=>a.yoy-b.yoy).slice(0,3);
 
-  let insight = `<b>${meta.name}</b> — 25년 여객 ${fmt(team.pax_25)}명 (전체 ${(team.pax_25/t.pax_25*100).toFixed(1)}%), ${team.city_count}개 도시. `;
-  insight += `<b>피크 ${peakMonth}월</b>, 저점 ${lowMonth}월. `;
+  let insight = `<b>${meta.name}</b> — 25년 누적 여객 ${fmt(team.pax_25)}명 (전체 ${(team.pax_25/t.pax_25*100).toFixed(1)}%), ${team.city_count}개 도시. `;
+  insight += `<b>25년 피크 ${peakMonth}월</b>, 저점 ${lowMonth}월. `;
   insight += `Top 3 도시: ${topCities.map(c=>`<b>${c.name}</b>(${fmtShort(c.pax_25)})`).join(' · ')}. `;
-  if (growingCities[0] && growingCities[0].yoy > 5) {
-    insight += `<br/>🚀 <b>YoY 성장</b>: ${growingCities.map(c=>`${c.name}(${c.yoy>=0?'+':''}${c.yoy.toFixed(0)}%)`).join(', ')}. `;
+  insight += `<br/><span style="opacity:0.7; font-size:11px;">※ YoY = 26년 1~4월 ÷ 25년 1~4월 (24년 데이터 사용 안 함)</span> `;
+  if (growingCities.length > 0) {
+    insight += `<br/>🚀 <b>YoY 성장</b>: ${growingCities.map(c=>`${c.name}(+${c.yoy.toFixed(0)}%)`).join(', ')}. `;
   }
-  if (decliningCities[0] && decliningCities[0].yoy < -5) {
+  if (decliningCities.length > 0) {
     insight += `<br/>⚠️ <b>YoY 하락</b>: ${decliningCities.map(c=>`${c.name}(${c.yoy.toFixed(0)}%)`).join(', ')}.`;
   }
 
@@ -337,8 +339,8 @@ DATA.teams.forEach((team, ti) => {
         <div class="team-title" style="color:${meta.color}">${meta.name}</div>
         <div class="team-meta">
           <span>도시 <b style="color:var(--text)">${team.city_count}개</b></span>
-          <span>25년 <b style="color:var(--text)">${fmtShort(team.pax_25)}명</b></span>
-          <span>YoY <span class="yoy ${yoyCls}">${yoyStr}</span></span>
+          <span>25년 누적 <b style="color:var(--text)">${fmtShort(team.pax_25)}명</b></span>
+          <span title="26년 1~4월 ÷ 25년 1~4월">YoY (1~4월) <span class="yoy ${yoyCls}">${yoyStr}</span></span>
         </div>
       </div>
       <div class="team-body">
