@@ -210,8 +210,8 @@
   </div>
 
   <div class="card col-12">
-    <h2>전체 도시 통합 테이블 — 거래액 · 유입 · 전환 + 월별 예약 점유율</h2>
-    <div class="desc">환승 의존 도시 제외. 25년 12개월 + 26년 1~4월 예약 점유율 모두 표시 (월별 컬럼). 우측으로 스크롤하면 월별 점유율 확인 가능.</div>
+    <h2>전체 도시 통합 테이블 — 거래액 · 유입 · 전환 + 월별 시장 점유율</h2>
+    <div class="desc">환승 의존 도시 제외. 25년 12개월 + 26년 1~4월 시장 점유율 모두 표시 (월별 컬럼). 우측으로 스크롤하면 월별 점유율 확인 가능.</div>
     <input type="text" class="search" id="citySearch" placeholder="도시·팀·IATA 검색..."/>
     <div class="table-wrap"><table class="cities" id="cityTable"></table></div>
   </div>
@@ -479,7 +479,7 @@ new Chart(document.getElementById('teamTrendChart'), {
 const MONTH_KEYS_25 = ['25-01','25-02','25-03','25-04','25-05','25-06','25-07','25-08','25-09','25-10','25-11','25-12'];
 const MONTH_KEYS_26 = ['26-01','26-02','26-03','26-04'];
 
-// 도시별 월별 예약 점유율 미리 계산 (cities에 _share_m25_X, _share_m26_X 추가)
+// 도시별 월별 시장 점유율 미리 계산 (cities에 _share_m25_X, _share_m26_X 추가)
 NON_OUTLIER.forEach(c => {
   for (let i=0; i<12; i++) {
     c[`share_m25_${i}`] = (c.months_25_pax[i]>0) ? (c.months_25_tna[i]/c.months_25_pax[i]*100) : null;
@@ -502,26 +502,26 @@ function renderTable(filter='') {
     return c.name.toLowerCase().includes(f) || (c.team||'').toLowerCase().includes(f) || c.codes.join(',').toLowerCase().includes(f);
   });
 
-  // 헤더: 도시 / IATA / 팀 / 25년 요약 (거래액·유입·전환) / 월별 예약 점유율 (16개) / Δ
+  // 헤더: 도시 / IATA / 팀 / 25년 요약 (거래액·유입·전환) / 월별 시장 점유율 (16개) / Δ
   let head = `<thead><tr>
     <th data-k="name">도시</th>
     <th data-k="codes">IATA</th>
     <th data-k="team">팀</th>
     <th data-k="pax_25">25년 항공</th>
     <th data-k="tna_25">25년 T&A</th>
-    <th data-k="share_25" title="T&A 여행자수 ÷ 항공 출국자수">예약 점유율 (25년)</th>
+    <th data-k="share_25" title="T&A 여행자수 ÷ 항공 출국자수">시장 점유율 (25년)</th>
     <th data-k="interest_share_25" title="PDP UV ÷ 항공 출국자수">유입 점유율 (25년)</th>
     <th data-k="cvr_25" title="구매 UV ÷ PDP UV">전환율 (25년)</th>
-    <th data-k="share_26_q14">예약 점유율 (26년 1~4월)</th>
+    <th data-k="share_26_q14">시장 점유율 (26년 1~4월)</th>
     <th data-k="interest_share_26_q14">유입 점유율 (26년 1~4월)</th>
     <th data-k="cvr_26">전환율 (26년 1~4월)</th>
     <th data-k="share_delta">Δ 거래액 (pp)</th>`;
-  // 월별 예약 점유율 헤더
+  // 월별 시장 점유율 헤더
   ['25년 1월','25년 2월','25년 3월','25년 4월','25년 5월','25년 6월','25년 7월','25년 8월','25년 9월','25년 10월','25년 11월','25년 12월'].forEach((m,i)=>{
-    head += `<th data-k="share_m25_${i}" title="${m} 예약 점유율">${m}</th>`;
+    head += `<th data-k="share_m25_${i}" title="${m} 시장 점유율">${m}</th>`;
   });
   ['26년 1월','26년 2월','26년 3월','26년 4월'].forEach((m,i)=>{
-    head += `<th data-k="share_m26_${i}" title="${m} 예약 점유율">${m}</th>`;
+    head += `<th data-k="share_m26_${i}" title="${m} 시장 점유율">${m}</th>`;
   });
   head += `</tr></thead>`;
 
