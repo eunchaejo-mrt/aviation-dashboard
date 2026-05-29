@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>🐼 중화권 점유율 인사이트 — 한-중 무비자 효과 분석</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#FFFFFF; --panel:#FFFFFF; --panel-2:#F8F9FA;
+    --border:#DEE2E6; --text:#212529; --text-dim:#666D75;
+    --accent:#51ABF3; --accent-2:#3A95DD; --accent-soft:#E8F4FD;
+    --good:#33B893; --warn:#FFBF00; --bad:#FA5B4A;
+    --china:#FA5B4A; --china-2:#F78000; --china-soft:#FFF0EE;
+    --shadow:0 1px 3px rgba(33,37,41,0.04), 0 1px 2px rgba(33,37,41,0.06);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Pretendard",-apple-system,sans-serif; background:#F8F9FA; color:var(--text); padding:24px; }
+  .container { max-width:1500px; margin:0 auto; }
+  header { margin-bottom:24px; }
+  h1 { font-size:30px; margin:0 0 8px 0; letter-spacing:-0.02em;
+       background:linear-gradient(90deg,#FA5B4A,#F78000);
+       -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { color:var(--text-dim); font-size:14px; line-height:1.6; }
+  .badge { display:inline-block; padding:3px 12px; border-radius:12px;
+    background:var(--china-soft); color:var(--china); font-size:12px; margin-right:6px; font-weight:500; }
+  .nav-links { margin-top:12px; }
+  .nav-links a { display:inline-block; padding:6px 14px; margin-right:8px;
+    background:var(--accent-soft); color:var(--accent-2); text-decoration:none;
+    border-radius:8px; font-size:13px; font-weight:500; }
+  .hero-banner {
+    margin-top:14px; padding:16px 20px; border-radius:12px;
+    background:linear-gradient(90deg,#FFF0EE,#FFF2C6);
+    border-left:4px solid var(--china);
+    font-size:13.5px; line-height:1.7; color:#7C2419;
+  }
+  .hero-banner b { color:#5C1A12; }
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:20px 0 24px 0; }
+  .kpi { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow); }
+  .kpi .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }
+  .kpi .value { font-size:26px; font-weight:700; }
+  .kpi .unit { font-size:13px; color:var(--text-dim); margin-left:4px; font-weight:400; }
+  .kpi .delta { font-size:12px; margin-top:4px; }
+  .kpi .delta.up { color:var(--good); }
+  .kpi .delta.down { color:var(--bad); }
+  .kpi .delta.dim { color:var(--text-dim); }
+  .kpi.hero { background:linear-gradient(135deg, #FFF0EE, #FFF2C6); border-color:var(--china); }
+  .kpi.win { background:linear-gradient(135deg, #E8F7F0, #F0FAF4); border-color:var(--good); }
+
+  .grid { display:grid; grid-template-columns:repeat(12,1fr); gap:16px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; box-shadow:var(--shadow); }
+  .card h2 { font-size:17px; margin:0 0 4px 0; }
+  .card .desc { color:var(--text-dim); font-size:12px; margin-bottom:14px; }
+  .col-12 { grid-column:span 12; } .col-6 { grid-column:span 6; }
+  @media (max-width:1100px) { .col-6 { grid-column:span 12; } }
+  .chart-box { position:relative; height:400px; }
+  .chart-box.tall { height:560px; }
+
+  .insight {
+    background:#E8F7F0; border-left:3px solid var(--good);
+    padding:12px 16px; margin-top:14px; font-size:13px; line-height:1.7; color:#0D3B25; border-radius:6px;
+  }
+  .insight b { color:#0A2918; font-weight:600; }
+  .insight.bad { background:#FFF0EE; border-left-color:var(--bad); color:#7C2419; }
+  .insight.bad b { color:#5C1A12; }
+  .insight.warn { background:#FFF7D6; border-left-color:var(--warn); color:#7A5A00; }
+
+  table.cities { width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.cities th, table.cities td { padding:8px 10px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap; }
+  table.cities th:nth-child(1), table.cities td:nth-child(1),
+  table.cities th:nth-child(2), table.cities td:nth-child(2),
+  table.cities th:nth-child(3), table.cities td:nth-child(3) { text-align:left; }
+  table.cities th { color:var(--text-dim); font-weight:500; font-size:11px; background:var(--panel-2); }
+  table.cities td.up { color:var(--good); font-weight:600; }
+  table.cities td.down { color:var(--bad); font-weight:600; }
+  table.cities td.num { font-variant-numeric:tabular-nums; }
+
+  footer { color:var(--text-dim); font-size:11px; margin-top:30px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>🐼 중화권 점유율 인사이트</h1>
+  <div class="sub">
+    <span class="badge">한-중 무비자 효과</span>
+    <span class="badge">시장·유입·전환 통합</span>
+    <span class="badge">5개 권역 분해</span>
+  </div>
+  <div class="nav-links">
+    <a href="./index.html">← 메인</a>
+    <a href="./china.html">🐼 중화권 항공</a>
+    <a href="./share.html">📊 전체 점유율</a>
+  </div>
+  <div class="hero-banner" id="heroBanner">-</div>
+</header>
+
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<div class="grid">
+
+  <!-- 권역별 점유율 비교 -->
+  <div class="card col-12">
+    <h2>🌏 중화권 5개 권역 — 25년 vs 26년 1~4월 시장 점유율</h2>
+    <div class="desc">중국 본토는 한-중 무비자 효과로 점유율 상승. 나머지 권역은 하락.</div>
+    <div class="chart-box"><canvas id="subShareChart"></canvas></div>
+    <div class="insight" id="subInsight"></div>
+  </div>
+
+  <!-- 권역 월별 점유율 추이 -->
+  <div class="card col-12">
+    <h2>📈 권역별 월별 시장 점유율 추이 — 25년 12개월 + 26년 1~4월</h2>
+    <div class="desc">권역별 시장 점유율 트렌드. 본토는 상승, 다른 권역은 하락 추세.</div>
+    <div class="chart-box tall"><canvas id="subTrendChart"></canvas></div>
+  </div>
+
+  <!-- 본토 도시 Top 10 -->
+  <div class="card col-6">
+    <h2>🇨🇳 중국 본토 도시별 점유율 (25년)</h2>
+    <div class="desc">본토 10개 도시 중 점유율 높은 순. 시장 점유율 / 유입 점유율 비교.</div>
+    <div class="chart-box"><canvas id="mainlandChart"></canvas></div>
+  </div>
+
+  <!-- 본토 26년 YoY 변화 -->
+  <div class="card col-6">
+    <h2>🚀 본토 도시별 시장 점유율 YoY (26년 1~4월 vs 25년 1~4월)</h2>
+    <div class="desc">한-중 무비자 효과로 본토 도시 다수가 점유율 상승.</div>
+    <div class="chart-box"><canvas id="mainlandYoYChart"></canvas></div>
+  </div>
+
+  <!-- 시장 vs 유입 점유율 -->
+  <div class="card col-12">
+    <h2>💎 권역별 시장 점유율 vs 유입 점유율 (25년)</h2>
+    <div class="desc">시장 점유율(파랑) = 실제 예약 점유 / 유입 점유율(주황) = 사이트 관심도. 둘의 격차가 클수록 CVR 약점.</div>
+    <div class="chart-box"><canvas id="shareInterestChart"></canvas></div>
+  </div>
+
+  <!-- 한-중 무비자 효과 정량화 -->
+  <div class="card col-12">
+    <h2>✈️ 한-중 무비자 효과 정량화 — 시장은 커지는데 MRT는?</h2>
+    <div class="desc">항공 출국자 YoY vs T&A 예약자 YoY 비교. 본토는 시장이 폭발 성장하는데 MRT 점유율이 따라가는지가 핵심.</div>
+    <div class="chart-box"><canvas id="visaImpactChart"></canvas></div>
+    <div class="insight bad" id="visaInsight"></div>
+  </div>
+
+  <!-- 전체 도시 테이블 -->
+  <div class="card col-12">
+    <h2>📋 중화권 도시별 점유율 통합 테이블</h2>
+    <div class="desc">권역별로 그룹화. 시장·유입·전환·YoY 모두 표시.</div>
+    <div style="overflow-x:auto;"><table class="cities" id="cityTable"></table></div>
+  </div>
+
+</div>
+
+<footer>
+  데이터 소스: 항공포털 (출발 + 환승 차감) × Redash MART_SALE_D + MART_BIZ_LOG_PID_CONVERSION_D
+  · 시장 점유율 = MRT 예약 인원수(PAX 합산) ÷ 항공 출국자 · 유입 점유율 = PDP UV(PID) ÷ 항공
+</footer>
+
+</div>
+
+<script>
+const DATA = {"subregions": [{"name": "중국 본토", "city_count": 10, "pax_25": 4275140, "tna_25": 100006, "share_25": 2.339245030572098, "pax_25_q14": 1274783, "tna_25_q14": 27456, "share_25_q14": 2.1537783293313453, "pax_26": 1593670, "tna_26": 46190, "share_26": 2.898341563811831, "delta": 0.7445632344804856, "interest_25": 21.03828178726311, "interest_26": 12.31195918853966, "cvr_25": 9.119250713796507, "cvr_26": 9.29097099056123, "monthly_share_25": [2.019053035688895, 2.7334820756395692, 2.112110662884895, 1.8351388110598301, 2.1466402703016585, 1.5303837091263772, 1.5614250397538412, 2.4092938231047407, 3.0919620079510093, 2.96482878392173, 2.6387970381292076, 3.08517515237333], "monthly_share_26": [3.747623984793503, 2.533952088026339, 3.4411734641725444, 1.8614504421845504], "cities": [{"name": "상하이", "codes": ["PVG", "SHA"], "team": "China", "pax_25": 1273770, "pax_25_q14": 380356, "pax_26_q14": 465119, "tna_25": 80592, "tna_25_q14": 23784, "tna_26_q14": 37096, "share_25": 6.327044913916955, "share_25_q14": 6.253089211160071, "share_26_q14": 7.975593342778945, "share_delta": 1.7225041316188738, "months_25_pax": [90814, 87985, 95869, 105688, 108453, 107746, 111900, 110951, 111383, 116193, 113759, 113029], "months_26_pax": [122395, 103050, 115324, 124350], "months_25_tna": [6028, 6963, 5194, 5599, 6011, 3923, 4490, 7355, 8756, 9053, 7373, 9847], "months_26_tna": [13464, 7492, 10295, 5845], "interest_share_25": 48.42800760392185, "interest_share_25_q14": 47.839189292516124, "interest_share_26_q14": 31.037005587516134, "interest_share_delta": -16.80218370499999, "detail_uv_25": 617952, "purchase_uv_25": 62353, "detail_uv_26": 140472, "purchase_uv_26": 14958, "cvr_25": 10.09026591062089, "cvr_26": 10.648385443362377, "is_transit_outlier": false, "months_25_tna_pax": [6028, 6963, 5194, 5599, 6011, 3923, 4490, 7355, 8756, 9053, 7373, 9847], "months_26_tna_pax": [13464, 7492, 10295, 5845], "tna_pax_25": 80592, "tna_pax_25_q14": 23784, "tna_pax_26_q14": 37096, "share_pax_25": 6.327044913916955, "share_pax_25_q14": 6.253089211160071, "share_pax_26_q14": 7.975593342778945, "share_pax_delta": 1.7225041316188738, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "베이징", "codes": ["PEK", "PKX"], "team": "China", "pax_25": 759883, "pax_25_q14": 219262, "pax_26_q14": 278893, "tna_25": 12131, "tna_25_q14": 3106, "tna_26_q14": 2896, "share_25": 1.5964299767201002, "share_25_q14": 1.416570130711204, "share_26_q14": 1.0383910675420323, "share_delta": -0.3781790631691717, "months_25_pax": [56136, 48676, 50083, 64367, 67821, 64699, 67506, 64524, 62719, 71308, 69621, 72423], "months_26_pax": [73924, 64255, 66537, 74177], "months_25_tna": [425, 843, 1050, 788, 1444, 1033, 1064, 1018, 1093, 1255, 1159, 959], "months_26_tna": [830, 544, 733, 789], "interest_share_25": 19.401575686386195, "interest_share_25_q14": 22.309133677378767, "interest_share_26_q14": 8.013342424951926, "interest_share_delta": -14.295791252426842, "detail_uv_25": 145005, "purchase_uv_25": 13718, "detail_uv_26": 22144, "purchase_uv_26": 1574, "cvr_25": 9.460363435743595, "cvr_26": 7.108020231213873, "is_transit_outlier": false, "months_25_tna_pax": [425, 843, 1050, 788, 1444, 1033, 1064, 1018, 1093, 1255, 1159, 959], "months_26_tna_pax": [830, 544, 733, 789], "tna_pax_25": 12131, "tna_pax_25_q14": 3106, "tna_pax_26_q14": 2896, "share_pax_25": 1.5964299767201002, "share_pax_25_q14": 1.416570130711204, "share_pax_26_q14": 1.0383910675420323, "share_pax_delta": -0.3781790631691717, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "청도", "codes": ["TAO"], "team": "China", "pax_25": 732467, "pax_25_q14": 220120, "pax_26_q14": 269261, "tna_25": 6382, "tna_25_q14": 388, "tna_26_q14": 5643, "share_25": 0.8713020518330519, "share_25_q14": 0.17626749045974924, "share_26_q14": 2.095736107345661, "share_delta": 1.9194686168859116, "months_25_pax": [57615, 51197, 50756, 60552, 61574, 69124, 67182, 65785, 58698, 64364, 59804, 65816], "months_26_pax": [72866, 63898, 65739, 66758], "months_25_tna": [44, 133, 128, 83, 416, 744, 582, 653, 669, 743, 1115, 1072], "months_26_tna": [1175, 1219, 2277, 972], "interest_share_25": 9.843774947842531, "interest_share_25_q14": 5.785235393055453, "interest_share_26_q14": 6.140453106154485, "interest_share_delta": 0.35521771309903194, "detail_uv_25": 73344, "purchase_uv_25": 4608, "detail_uv_26": 16758, "purchase_uv_26": 1371, "cvr_25": 6.282722513089005, "cvr_26": 8.181167203723595, "is_transit_outlier": false, "months_25_tna_pax": [44, 133, 128, 83, 416, 744, 582, 653, 669, 743, 1115, 1072], "months_26_tna_pax": [1175, 1219, 2277, 972], "tna_pax_25": 6382, "tna_pax_25_q14": 388, "tna_pax_26_q14": 5643, "share_pax_25": 0.8713020518330519, "share_pax_25_q14": 0.17626749045974924, "share_pax_26_q14": 2.095736107345661, "share_pax_delta": 1.9194686168859116, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "광저우", "codes": ["CAN"], "team": "China", "pax_25": 346533, "pax_25_q14": 103765, "pax_26_q14": 132925, "tna_25": 46, "tna_25_q14": 11, "tna_26_q14": 36, "share_25": 0.01327434905189405, "share_25_q14": 0.010600876981641208, "share_26_q14": 0.02708294150836938, "share_delta": 0.016482064526728173, "months_25_pax": [23053, 23631, 27788, 29293, 26532, 26105, 28782, 28688, 28895, 34102, 34008, 35656], "months_26_pax": [33558, 27741, 35939, 35687], "months_25_tna": [0, 2, 6, 3, 3, 1, 1, 2, 2, 10, 7, 9], "months_26_tna": [8, 4, 10, 14], "interest_share_25": 1.3504158833436735, "interest_share_25_q14": 1.2281672468877118, "interest_share_26_q14": 0.999995082350108, "interest_share_delta": -0.2281721645376038, "detail_uv_25": 4785, "purchase_uv_25": 69, "detail_uv_26": 1223, "purchase_uv_26": 11, "cvr_25": 1.4420062695924765, "cvr_26": 0.8994276369582993, "is_transit_outlier": false, "months_25_tna_pax": [0, 2, 6, 3, 3, 1, 1, 2, 2, 10, 7, 9], "months_26_tna_pax": [8, 4, 10, 14], "tna_pax_25": 46, "tna_pax_25_q14": 11, "tna_pax_26_q14": 36, "share_pax_25": 0.01327434905189405, "share_pax_25_q14": 0.010600876981641208, "share_pax_26_q14": 0.02708294150836938, "share_pax_delta": 0.016482064526728173, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "센젠", "codes": ["SZX"], "team": "China", "pax_25": 290466, "pax_25_q14": 84906, "pax_26_q14": 111903, "tna_25": 46, "tna_25_q14": 17, "tna_26_q14": 42, "share_25": 0.01583662115359457, "share_25_q14": 0.02002214213365369, "share_26_q14": 0.03753250583094287, "share_delta": 0.017510363697289182, "months_25_pax": [19300, 18658, 20884, 26064, 25227, 23915, 24534, 24449, 22748, 27075, 27849, 29763], "months_26_pax": [30210, 24651, 28897, 28145], "months_25_tna": [4, 4, 4, 5, 8, 4, 1, 2, 2, 2, 3, 7], "months_26_tna": [15, 14, 9, 4], "interest_share_25": 2.8562405785131717, "interest_share_25_q14": 3.265904106666847, "interest_share_26_q14": 1.7788755052307774, "interest_share_delta": -1.4870286014360694, "detail_uv_25": 8270, "purchase_uv_25": 58, "detail_uv_26": 1964, "purchase_uv_26": 21, "cvr_25": 0.7013301088270859, "cvr_26": 1.0692464358452138, "is_transit_outlier": false, "months_25_tna_pax": [4, 4, 4, 5, 8, 4, 1, 2, 2, 2, 3, 7], "months_26_tna_pax": [15, 14, 9, 4], "tna_pax_25": 46, "tna_pax_25_q14": 17, "tna_pax_26_q14": 42, "share_pax_25": 0.01583662115359457, "share_pax_25_q14": 0.02002214213365369, "share_pax_26_q14": 0.03753250583094287, "share_pax_delta": 0.017510363697289182, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "대련", "codes": ["DLC"], "team": "China", "pax_25": 245710, "pax_25_q14": 70378, "pax_26_q14": 97530, "tna_25": 54, "tna_25_q14": 7, "tna_26_q14": 25, "share_25": 0.02197712750803793, "share_25_q14": 0.009946290033817386, "share_26_q14": 0.02563313852148057, "share_delta": 0.015686848487663184, "months_25_pax": [21246, 16600, 15062, 17470, 19323, 19390, 25474, 27221, 22170, 23173, 18101, 20480], "months_26_pax": [25359, 24292, 22388, 25491], "months_25_tna": [0, 2, 4, 1, 4, 4, 3, 10, 11, 7, 3, 5], "months_26_tna": [5, 1, 6, 13], "interest_share_25": 2.2741747252440603, "interest_share_25_q14": 2.0227885723450156, "interest_share_26_q14": 2.475852407379966, "interest_share_delta": 0.4530638350349503, "detail_uv_25": 5551, "purchase_uv_25": 66, "detail_uv_26": 2450, "purchase_uv_26": 16, "cvr_25": 1.1889749594667627, "cvr_26": 0.653061224489796, "is_transit_outlier": false, "months_25_tna_pax": [0, 2, 4, 1, 4, 4, 3, 10, 11, 7, 3, 5], "months_26_tna_pax": [5, 1, 6, 13], "tna_pax_25": 54, "tna_pax_25_q14": 7, "tna_pax_26_q14": 25, "share_pax_25": 0.02197712750803793, "share_pax_25_q14": 0.009946290033817386, "share_pax_26_q14": 0.02563313852148057, "share_pax_delta": 0.015686848487663184, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "항조우", "codes": ["HGH"], "team": "China", "pax_25": 207876, "pax_25_q14": 60182, "pax_26_q14": 78489, "tna_25": 95, "tna_25_q14": 17, "tna_26_q14": 49, "share_25": 0.04570032134541746, "share_25_q14": 0.028247648798644113, "share_26_q14": 0.06242913019658806, "share_delta": 0.03418148139794394, "months_25_pax": [13789, 13250, 14842, 18301, 18262, 18062, 19201, 18651, 17244, 18830, 18749, 18695], "months_26_pax": [20510, 17933, 21043, 19003], "months_25_tna": [4, 2, 6, 5, 12, 4, 6, 4, 12, 16, 7, 17], "months_26_tna": [15, 14, 13, 7], "interest_share_25": 2.5160049426604014, "interest_share_25_q14": 2.5098950953856156, "interest_share_26_q14": 1.3989747661150451, "interest_share_delta": -1.1109203292705705, "detail_uv_25": 5235, "purchase_uv_25": 118, "detail_uv_26": 1074, "purchase_uv_26": 27, "cvr_25": 2.254059216809933, "cvr_26": 2.5139664804469275, "is_transit_outlier": false, "months_25_tna_pax": [4, 2, 6, 5, 12, 4, 6, 4, 12, 16, 7, 17], "months_26_tna_pax": [15, 14, 13, 7], "tna_pax_25": 95, "tna_pax_25_q14": 17, "tna_pax_26_q14": 49, "share_pax_25": 0.04570032134541746, "share_pax_25_q14": 0.028247648798644113, "share_pax_26_q14": 0.06242913019658806, "share_pax_delta": 0.03418148139794394, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "연길", "codes": ["YNJ"], "team": "China", "pax_25": 201698, "pax_25_q14": 74333, "pax_26_q14": 82297, "tna_25": 21, "tna_25_q14": 3, "tna_26_q14": 13, "share_25": 0.010411605469563406, "share_25_q14": 0.004035892537634697, "share_26_q14": 0.015796444584857284, "share_delta": 0.011760552047222587, "months_25_pax": [21947, 17608, 16797, 17981, 24849, 28754, 30296, 15989, 0, 780, 10155, 16542], "months_26_pax": [19341, 23736, 18167, 21053], "months_25_tna": [3, 0, 0, 0, 3, 2, 1, 5, 1, 3, 1, 2], "months_26_tna": [2, 2, 4, 5], "interest_share_25": 3.114571342005903, "interest_share_25_q14": 0.4259368381228093, "interest_share_26_q14": 1.0571622368571216, "interest_share_delta": 0.6312253987343124, "detail_uv_25": 3084, "purchase_uv_25": 36, "detail_uv_26": 906, "purchase_uv_26": 9, "cvr_25": 1.1673151750972763, "cvr_26": 0.9933774834437087, "is_transit_outlier": false, "months_25_tna_pax": [3, 0, 0, 0, 3, 2, 1, 5, 1, 3, 1, 2], "months_26_tna_pax": [2, 2, 4, 5], "tna_pax_25": 21, "tna_pax_25_q14": 3, "tna_pax_26_q14": 13, "share_pax_25": 0.010411605469563406, "share_pax_25_q14": 0.004035892537634697, "share_pax_26_q14": 0.015796444584857284, "share_pax_delta": 0.011760552047222587, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "시안", "codes": ["XIY"], "team": "China", "pax_25": 108681, "pax_25_q14": 27804, "pax_26_q14": 40259, "tna_25": 526, "tna_25_q14": 74, "tna_26_q14": 331, "share_25": 0.48398524121051517, "share_25_q14": 0.26614875557473744, "share_26_q14": 0.8221764077597556, "share_delta": 0.5560276521850183, "months_25_pax": [6188, 5817, 6733, 9066, 10392, 10535, 10480, 9818, 9143, 11576, 9471, 9462], "months_26_pax": [9326, 9308, 10093, 11532], "months_25_tna": [7, 16, 22, 29, 41, 49, 34, 29, 45, 91, 68, 95], "months_26_tna": [70, 56, 108, 97], "interest_share_25": 19.733661924450754, "interest_share_25_q14": 22.116372743655205, "interest_share_26_q14": 13.315525047413551, "interest_share_delta": -8.800847696241654, "detail_uv_25": 20810, "purchase_uv_25": 831, "detail_uv_26": 4963, "purchase_uv_26": 201, "cvr_25": 3.9932724651609806, "cvr_26": 4.049969776344953, "is_transit_outlier": false, "months_25_tna_pax": [7, 16, 22, 29, 41, 49, 34, 29, 45, 91, 68, 95], "months_26_tna_pax": [70, 56, 108, 97], "tna_pax_25": 526, "tna_pax_25_q14": 74, "tna_pax_26_q14": 331, "share_pax_25": 0.48398524121051517, "share_pax_25_q14": 0.26614875557473744, "share_pax_26_q14": 0.8221764077597556, "share_pax_delta": 0.5560276521850183, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "하얼빈", "codes": ["HRB"], "team": "China", "pax_25": 108056, "pax_25_q14": 33677, "pax_26_q14": 36994, "tna_25": 113, "tna_25_q14": 49, "tna_26_q14": 59, "share_25": 0.10457540534537647, "share_25_q14": 0.1454998960715028, "share_26_q14": 0.15948532194409903, "share_delta": 0.013985425872596241, "months_25_pax": [13430, 8806, 5100, 6341, 7820, 8961, 11462, 11379, 9598, 9754, 7439, 7966], "months_26_pax": [9175, 10480, 7193, 10146], "months_25_tna": [17, 23, 5, 4, 6, 10, 14, 16, 2, 2, 0, 14], "months_26_tna": [31, 13, 11, 4], "interest_share_25": 14.877653953198264, "interest_share_25_q14": 16.421221739010434, "interest_share_26_q14": 11.135303783513947, "interest_share_delta": -5.285917955496487, "detail_uv_25": 15380, "purchase_uv_25": 163, "detail_uv_26": 4258, "purchase_uv_26": 42, "cvr_25": 1.059817945383615, "cvr_26": 0.986378581493659, "is_transit_outlier": false, "months_25_tna_pax": [17, 23, 5, 4, 6, 10, 14, 16, 2, 2, 0, 14], "months_26_tna_pax": [31, 13, 11, 4], "tna_pax_25": 113, "tna_pax_25_q14": 49, "tna_pax_26_q14": 59, "share_pax_25": 0.10457540534537647, "share_pax_25_q14": 0.1454998960715028, "share_pax_26_q14": 0.15948532194409903, "share_pax_delta": 0.013985425872596241, "is_interest_inflated": false, "subregion": "중국 본토"}]}, {"name": "홍콩", "city_count": 1, "pax_25": 1321073, "tna_25": 81008, "share_25": 6.131985136324791, "pax_25_q14": 452778, "tna_25_q14": 37751, "share_25_q14": 8.33764007968585, "pax_26": 479838, "tna_26": 14888, "share_26": 3.102713832585164, "delta": -5.234926247100685, "interest_25": 28.57518093246929, "interest_26": 14.062454411697281, "cvr_25": 8.948103173783242, "cvr_26": 7.174296426930658, "monthly_share_25": [9.06012061663008, 9.717811214661323, 8.938323318131104, 5.599134912826513, 6.690639852690235, 3.578797507531053, 2.8953632554056132, 2.9659397032282158, 3.8920099523771996, 6.346624741355164, 6.338529520068736, 6.575534069008141], "monthly_share_26": [5.426665105934683, 3.0224647438168804, 2.3491729350597503, 1.503157174406669], "cities": [{"name": "홍콩", "codes": ["HKG"], "team": "China", "pax_25": 1321073, "pax_25_q14": 452778, "pax_26_q14": 479838, "tna_25": 81008, "tna_25_q14": 37751, "tna_26_q14": 14888, "share_25": 6.131985136324791, "share_25_q14": 8.33764007968585, "share_26_q14": 3.102713832585164, "share_delta": -5.234926247100685, "months_25_pax": [122537, 115242, 102178, 112821, 103727, 96932, 110487, 112477, 88823, 110673, 122205, 122971], "months_26_pax": [128145, 112888, 110209, 128596], "months_25_tna": [11102, 11199, 9133, 6317, 6940, 3469, 3199, 3336, 3457, 7024, 7746, 8086], "months_26_tna": [6954, 3412, 2589, 1933], "interest_share_25": 28.409049444215537, "interest_share_25_q14": 33.869581803173034, "interest_share_26_q14": 13.908237649739707, "interest_share_delta": -19.961344153433327, "detail_uv_25": 377499, "purchase_uv_25": 33779, "detail_uv_26": 67477, "purchase_uv_26": 4841, "cvr_25": 8.948103173783242, "cvr_26": 7.174296426930658, "is_transit_outlier": false, "months_25_tna_pax": [11102, 11199, 9133, 6317, 6940, 3469, 3199, 3336, 3457, 7024, 7746, 8086], "months_26_tna_pax": [6954, 3412, 2589, 1933], "tna_pax_25": 81008, "tna_pax_25_q14": 37751, "tna_pax_26_q14": 14888, "share_pax_25": 6.131985136324791, "share_pax_25_q14": 8.33764007968585, "share_pax_26_q14": 3.102713832585164, "share_pax_delta": -5.234926247100685, "is_interest_inflated": false, "subregion": "홍콩"}]}, {"name": "대만", "city_count": 2, "pax_25": 1615705, "tna_25": 123361, "share_25": 7.63511903472478, "pax_25_q14": 552269, "tna_25_q14": 53623, "share_25_q14": 9.709579932967449, "pax_26": 573476, "tna_26": 40559, "share_26": 7.072484288793254, "delta": -2.6370956441741944, "interest_25": 43.75687393428875, "interest_26": 23.92916181322322, "cvr_25": 10.734926773241751, "cvr_26": 10.885533564578658, "monthly_share_25": [11.752482767515513, 11.305403054249851, 9.141858231798812, 6.710557682330009, 8.019222699886786, 4.24858964515806, 3.869928048845074, 4.649077963740896, 4.704884775097474, 8.618316061998726, 8.19175241285794, 9.504123380100674], "monthly_share_26": [9.558286239097937, 7.611393371054567, 6.292358522534734, 4.604026063000161], "cities": [{"name": "타이베이", "codes": ["TPE", "TSA"], "team": "China", "pax_25": 1324172, "pax_25_q14": 458544, "pax_26_q14": 472370, "tna_25": 122008, "tna_25_q14": 53263, "tna_26_q14": 39771, "share_25": 9.213908767139012, "share_25_q14": 11.61567919327262, "share_26_q14": 8.419459322141542, "share_delta": -3.1962198711310776, "months_25_pax": [115372, 113251, 110997, 118924, 104601, 98332, 108262, 108447, 103189, 120930, 111649, 110218], "months_26_pax": [121293, 119111, 117513, 114453], "months_25_tna": [16274, 15377, 12099, 9513, 10032, 5056, 5082, 6256, 5898, 12351, 11093, 12977], "months_26_tna": [13921, 10884, 8748, 6218], "interest_share_25": 49.45418322452782, "interest_share_25_q14": 53.838161891530596, "interest_share_26_q14": 26.318902014089403, "interest_share_delta": -27.519259877441193, "detail_uv_25": 658180, "purchase_uv_25": 74019, "detail_uv_26": 126634, "purchase_uv_26": 14479, "cvr_25": 11.24601172931417, "cvr_26": 11.433738174581865, "is_transit_outlier": false, "months_25_tna_pax": [16274, 15377, 12099, 9513, 10032, 5056, 5082, 6256, 5898, 12351, 11093, 12977], "months_26_tna_pax": [13921, 10884, 8748, 6218], "tna_pax_25": 122008, "tna_pax_25_q14": 53263, "tna_pax_26_q14": 39771, "share_pax_25": 9.213908767139012, "share_pax_25_q14": 11.61567919327262, "share_pax_26_q14": 8.419459322141542, "share_pax_delta": -3.1962198711310776, "is_interest_inflated": false, "subregion": "대만"}, {"name": "카오슝", "codes": ["KHH"], "team": "China", "pax_25": 291533, "pax_25_q14": 93725, "pax_26_q14": 101106, "tna_25": 1353, "tna_25_q14": 360, "tna_26_q14": 788, "share_25": 0.4640984039542694, "share_25_q14": 0.3841024273139504, "share_26_q14": 0.7793800565742884, "share_delta": 0.39527762926033805, "months_25_pax": [24190, 23542, 22291, 23702, 21708, 21496, 23911, 26526, 22999, 25073, 26258, 29837], "months_26_pax": [27876, 26342, 24135, 22753], "months_25_tna": [128, 88, 86, 58, 97, 35, 33, 19, 39, 232, 204, 334], "months_26_tna": [337, 187, 165, 99], "interest_share_25": 16.45584177893982, "interest_share_25_q14": 15.46762200931396, "interest_share_26_q14": 9.745474017994308, "interest_share_delta": -5.722147991319652, "detail_uv_25": 48802, "purchase_uv_25": 1875, "detail_uv_26": 10594, "purchase_uv_26": 459, "cvr_25": 3.8420556534568253, "cvr_26": 4.332641117613743, "is_transit_outlier": false, "months_25_tna_pax": [128, 88, 86, 58, 97, 35, 33, 19, 39, 232, 204, 334], "months_26_tna_pax": [337, 187, 165, 99], "tna_pax_25": 1353, "tna_pax_25_q14": 360, "tna_pax_26_q14": 788, "share_pax_25": 0.4640984039542694, "share_pax_25_q14": 0.3841024273139504, "share_pax_26_q14": 0.7793800565742884, "share_pax_delta": 0.39527762926033805, "is_interest_inflated": false, "subregion": "대만"}]}, {"name": "마카오", "city_count": 1, "pax_25": 214501, "tna_25": 42031, "share_25": 19.594780443914015, "pax_25_q14": 70601, "tna_25_q14": 13221, "share_25_q14": 18.726363649240096, "pax_26": 77452, "tna_26": 13645, "share_26": 17.61736301192997, "delta": -1.1090006373101247, "interest_25": 100.12027915953772, "interest_26": 57.78804937251459, "cvr_25": 8.327008414082762, "cvr_26": 7.3774520756065955, "monthly_share_25": [24.76120499632623, 21.658496249483196, 17.291227199404393, 11.076873175478429, 17.355824524891833, 21.226553341148886, 17.961798552615967, 18.173263216163853, 15.413556647854845, 25.750435406208382, 23.328094103331136, 19.980324182516632], "monthly_share_26": [27.02029693666604, 17.55387931034483, 12.636556334583402, 12.030818886980061], "cities": [{"name": "마카오", "codes": ["MFM"], "team": "China", "pax_25": 214501, "pax_25_q14": 70601, "pax_26_q14": 77452, "tna_25": 42031, "tna_25_q14": 13221, "tna_26_q14": 13645, "share_25": 19.594780443914015, "share_25_q14": 18.726363649240096, "share_26_q14": 17.61736301192997, "share_delta": -1.1090006373101247, "months_25_pax": [19054, 16931, 16118, 18498, 18259, 13648, 16858, 18065, 16479, 19522, 19723, 21346], "months_26_pax": [21284, 18560, 18399, 19209], "months_25_tna": [4718, 3667, 2787, 2049, 3169, 2897, 3028, 3283, 2540, 5027, 4601, 4265], "months_26_tna": [5751, 3258, 2325, 2311], "interest_share_25": 99.38532277428715, "interest_share_25_q14": 71.58657111243434, "interest_share_26_q14": 55.74194524055629, "interest_share_delta": -15.844625871878051, "detail_uv_25": 214759, "purchase_uv_25": 17883, "detail_uv_26": 44758, "purchase_uv_26": 3302, "cvr_25": 8.327008414082762, "cvr_26": 7.3774520756065955, "is_transit_outlier": false, "months_25_tna_pax": [4718, 3667, 2787, 2049, 3169, 2897, 3028, 3283, 2540, 5027, 4601, 4265], "months_26_tna_pax": [5751, 3258, 2325, 2311], "tna_pax_25": 42031, "tna_pax_25_q14": 13221, "tna_pax_26_q14": 13645, "share_pax_25": 19.594780443914015, "share_pax_25_q14": 18.726363649240096, "share_pax_26_q14": 17.61736301192997, "share_pax_delta": -1.1090006373101247, "is_interest_inflated": false, "subregion": "마카오"}]}, {"name": "싱가포르", "city_count": 1, "pax_25": 964215, "tna_25": 68117, "share_25": 7.064503248756761, "pax_25_q14": 325027, "tna_25_q14": 25528, "share_25_q14": 7.854116734917407, "pax_26": 299758, "tna_26": 17688, "share_26": 5.900759946356728, "delta": -1.9533567885606793, "interest_25": 38.59108186452191, "interest_26": 18.03354706129611, "cvr_25": 9.157191192713807, "cvr_26": 10.83115970179625, "monthly_share_25": [11.206805003929231, 11.15785127166213, 5.3400400649227215, 3.1491615180935573, 5.440784693630419, 4.448366313295538, 10.023021994459114, 13.330516828615687, 5.990539748774597, 7.787189053214889, 3.885403020064814, 3.7633788521867504], "monthly_share_26": [8.980947931267195, 10.225983640814377, 3.0720205733133934, 2.042513753401219], "cities": [{"name": "싱가폴", "codes": ["SIN"], "team": "China", "pax_25": 964215, "pax_25_q14": 325027, "pax_26_q14": 299758, "tna_25": 68117, "tna_25_q14": 25528, "tna_26_q14": 17688, "share_25": 7.064503248756761, "share_25_q14": 7.854116734917407, "share_26_q14": 5.900759946356728, "share_delta": -1.9533567885606793, "months_25_pax": [94166, 77497, 68389, 84975, 82580, 82727, 76883, 71010, 69977, 82289, 87018, 86704], "months_26_pax": [77052, 66996, 71549, 84161], "months_25_tna": [10553, 8647, 3652, 2676, 4493, 3680, 7706, 9466, 4192, 6408, 3381, 3263], "months_26_tna": [6920, 6851, 2198, 1719], "interest_share_25": 39.25418888575789, "interest_share_25_q14": 35.019504310433945, "interest_share_26_q14": 18.712808937987443, "interest_share_delta": -16.3066953724465, "detail_uv_25": 372101, "purchase_uv_25": 34074, "detail_uv_26": 54057, "purchase_uv_26": 5855, "cvr_25": 9.157191192713807, "cvr_26": 10.83115970179625, "is_transit_outlier": false, "months_25_tna_pax": [10553, 8647, 3652, 2676, 4493, 3680, 7706, 9466, 4192, 6408, 3381, 3263], "months_26_tna_pax": [6920, 6851, 2198, 1719], "tna_pax_25": 68117, "tna_pax_25_q14": 25528, "tna_pax_26_q14": 17688, "share_pax_25": 7.064503248756761, "share_pax_25_q14": 7.854116734917407, "share_pax_26_q14": 5.900759946356728, "share_pax_delta": -1.9533567885606793, "is_interest_inflated": false, "subregion": "싱가포르"}]}], "total": {"pax_25": 8390634, "tna_25": 414523, "pax_25_q14": 2675458, "tna_25_q14": 157579, "pax_26": 3024194, "tna_26": 132970, "city_count": 15, "outliers": [], "share_25": 4.9403060603048585, "share_25_q14": 5.8897953172877315, "share_26": 4.396874010066814, "delta": -1.492921307220917, "pax_yoy": 13.034628089844805, "tna_yoy": -15.616928651660436, "monthly_share_25": [7.0555794842001776, 7.3534776597760105, 5.47791507115872, 3.7994910670645887, 4.6609178352597525, 3.028709811044196, 3.442905111440254, 4.405445530687134, 4.148494328988534, 5.739748410232151, 4.995997602638728, 5.381990989712291], "monthly_share_26": [6.247270652796745, 4.760102125368564, 4.022642796248934, 2.5499227257566384], "monthly_pax_25": [698837, 638691, 623887, 714043, 701128, 690426, 733218, 713980, 644065, 735642, 735809, 760908], "monthly_tna_25": [49307, 46966, 34176, 27130, 32679, 20911, 25244, 31454, 26719, 42224, 36761, 40952], "monthly_pax_26": [792314, 713241, 733125, 785514], "monthly_tna_26": [49498, 33951, 29491, 20030]}, "all_china_cities": [{"name": "마카오", "codes": ["MFM"], "team": "China", "pax_25": 214501, "pax_25_q14": 70601, "pax_26_q14": 77452, "tna_25": 42031, "tna_25_q14": 13221, "tna_26_q14": 13645, "share_25": 19.594780443914015, "share_25_q14": 18.726363649240096, "share_26_q14": 17.61736301192997, "share_delta": -1.1090006373101247, "months_25_pax": [19054, 16931, 16118, 18498, 18259, 13648, 16858, 18065, 16479, 19522, 19723, 21346], "months_26_pax": [21284, 18560, 18399, 19209], "months_25_tna": [4718, 3667, 2787, 2049, 3169, 2897, 3028, 3283, 2540, 5027, 4601, 4265], "months_26_tna": [5751, 3258, 2325, 2311], "interest_share_25": 99.38532277428715, "interest_share_25_q14": 71.58657111243434, "interest_share_26_q14": 55.74194524055629, "interest_share_delta": -15.844625871878051, "detail_uv_25": 214759, "purchase_uv_25": 17883, "detail_uv_26": 44758, "purchase_uv_26": 3302, "cvr_25": 8.327008414082762, "cvr_26": 7.3774520756065955, "is_transit_outlier": false, "months_25_tna_pax": [4718, 3667, 2787, 2049, 3169, 2897, 3028, 3283, 2540, 5027, 4601, 4265], "months_26_tna_pax": [5751, 3258, 2325, 2311], "tna_pax_25": 42031, "tna_pax_25_q14": 13221, "tna_pax_26_q14": 13645, "share_pax_25": 19.594780443914015, "share_pax_25_q14": 18.726363649240096, "share_pax_26_q14": 17.61736301192997, "share_pax_delta": -1.1090006373101247, "is_interest_inflated": false, "subregion": "마카오"}, {"name": "타이베이", "codes": ["TPE", "TSA"], "team": "China", "pax_25": 1324172, "pax_25_q14": 458544, "pax_26_q14": 472370, "tna_25": 122008, "tna_25_q14": 53263, "tna_26_q14": 39771, "share_25": 9.213908767139012, "share_25_q14": 11.61567919327262, "share_26_q14": 8.419459322141542, "share_delta": -3.1962198711310776, "months_25_pax": [115372, 113251, 110997, 118924, 104601, 98332, 108262, 108447, 103189, 120930, 111649, 110218], "months_26_pax": [121293, 119111, 117513, 114453], "months_25_tna": [16274, 15377, 12099, 9513, 10032, 5056, 5082, 6256, 5898, 12351, 11093, 12977], "months_26_tna": [13921, 10884, 8748, 6218], "interest_share_25": 49.45418322452782, "interest_share_25_q14": 53.838161891530596, "interest_share_26_q14": 26.318902014089403, "interest_share_delta": -27.519259877441193, "detail_uv_25": 658180, "purchase_uv_25": 74019, "detail_uv_26": 126634, "purchase_uv_26": 14479, "cvr_25": 11.24601172931417, "cvr_26": 11.433738174581865, "is_transit_outlier": false, "months_25_tna_pax": [16274, 15377, 12099, 9513, 10032, 5056, 5082, 6256, 5898, 12351, 11093, 12977], "months_26_tna_pax": [13921, 10884, 8748, 6218], "tna_pax_25": 122008, "tna_pax_25_q14": 53263, "tna_pax_26_q14": 39771, "share_pax_25": 9.213908767139012, "share_pax_25_q14": 11.61567919327262, "share_pax_26_q14": 8.419459322141542, "share_pax_delta": -3.1962198711310776, "is_interest_inflated": false, "subregion": "대만"}, {"name": "상하이", "codes": ["PVG", "SHA"], "team": "China", "pax_25": 1273770, "pax_25_q14": 380356, "pax_26_q14": 465119, "tna_25": 80592, "tna_25_q14": 23784, "tna_26_q14": 37096, "share_25": 6.327044913916955, "share_25_q14": 6.253089211160071, "share_26_q14": 7.975593342778945, "share_delta": 1.7225041316188738, "months_25_pax": [90814, 87985, 95869, 105688, 108453, 107746, 111900, 110951, 111383, 116193, 113759, 113029], "months_26_pax": [122395, 103050, 115324, 124350], "months_25_tna": [6028, 6963, 5194, 5599, 6011, 3923, 4490, 7355, 8756, 9053, 7373, 9847], "months_26_tna": [13464, 7492, 10295, 5845], "interest_share_25": 48.42800760392185, "interest_share_25_q14": 47.839189292516124, "interest_share_26_q14": 31.037005587516134, "interest_share_delta": -16.80218370499999, "detail_uv_25": 617952, "purchase_uv_25": 62353, "detail_uv_26": 140472, "purchase_uv_26": 14958, "cvr_25": 10.09026591062089, "cvr_26": 10.648385443362377, "is_transit_outlier": false, "months_25_tna_pax": [6028, 6963, 5194, 5599, 6011, 3923, 4490, 7355, 8756, 9053, 7373, 9847], "months_26_tna_pax": [13464, 7492, 10295, 5845], "tna_pax_25": 80592, "tna_pax_25_q14": 23784, "tna_pax_26_q14": 37096, "share_pax_25": 6.327044913916955, "share_pax_25_q14": 6.253089211160071, "share_pax_26_q14": 7.975593342778945, "share_pax_delta": 1.7225041316188738, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "홍콩", "codes": ["HKG"], "team": "China", "pax_25": 1321073, "pax_25_q14": 452778, "pax_26_q14": 479838, "tna_25": 81008, "tna_25_q14": 37751, "tna_26_q14": 14888, "share_25": 6.131985136324791, "share_25_q14": 8.33764007968585, "share_26_q14": 3.102713832585164, "share_delta": -5.234926247100685, "months_25_pax": [122537, 115242, 102178, 112821, 103727, 96932, 110487, 112477, 88823, 110673, 122205, 122971], "months_26_pax": [128145, 112888, 110209, 128596], "months_25_tna": [11102, 11199, 9133, 6317, 6940, 3469, 3199, 3336, 3457, 7024, 7746, 8086], "months_26_tna": [6954, 3412, 2589, 1933], "interest_share_25": 28.409049444215537, "interest_share_25_q14": 33.869581803173034, "interest_share_26_q14": 13.908237649739707, "interest_share_delta": -19.961344153433327, "detail_uv_25": 377499, "purchase_uv_25": 33779, "detail_uv_26": 67477, "purchase_uv_26": 4841, "cvr_25": 8.948103173783242, "cvr_26": 7.174296426930658, "is_transit_outlier": false, "months_25_tna_pax": [11102, 11199, 9133, 6317, 6940, 3469, 3199, 3336, 3457, 7024, 7746, 8086], "months_26_tna_pax": [6954, 3412, 2589, 1933], "tna_pax_25": 81008, "tna_pax_25_q14": 37751, "tna_pax_26_q14": 14888, "share_pax_25": 6.131985136324791, "share_pax_25_q14": 8.33764007968585, "share_pax_26_q14": 3.102713832585164, "share_pax_delta": -5.234926247100685, "is_interest_inflated": false, "subregion": "홍콩"}, {"name": "싱가폴", "codes": ["SIN"], "team": "China", "pax_25": 964215, "pax_25_q14": 325027, "pax_26_q14": 299758, "tna_25": 68117, "tna_25_q14": 25528, "tna_26_q14": 17688, "share_25": 7.064503248756761, "share_25_q14": 7.854116734917407, "share_26_q14": 5.900759946356728, "share_delta": -1.9533567885606793, "months_25_pax": [94166, 77497, 68389, 84975, 82580, 82727, 76883, 71010, 69977, 82289, 87018, 86704], "months_26_pax": [77052, 66996, 71549, 84161], "months_25_tna": [10553, 8647, 3652, 2676, 4493, 3680, 7706, 9466, 4192, 6408, 3381, 3263], "months_26_tna": [6920, 6851, 2198, 1719], "interest_share_25": 39.25418888575789, "interest_share_25_q14": 35.019504310433945, "interest_share_26_q14": 18.712808937987443, "interest_share_delta": -16.3066953724465, "detail_uv_25": 372101, "purchase_uv_25": 34074, "detail_uv_26": 54057, "purchase_uv_26": 5855, "cvr_25": 9.157191192713807, "cvr_26": 10.83115970179625, "is_transit_outlier": false, "months_25_tna_pax": [10553, 8647, 3652, 2676, 4493, 3680, 7706, 9466, 4192, 6408, 3381, 3263], "months_26_tna_pax": [6920, 6851, 2198, 1719], "tna_pax_25": 68117, "tna_pax_25_q14": 25528, "tna_pax_26_q14": 17688, "share_pax_25": 7.064503248756761, "share_pax_25_q14": 7.854116734917407, "share_pax_26_q14": 5.900759946356728, "share_pax_delta": -1.9533567885606793, "is_interest_inflated": false, "subregion": "싱가포르"}, {"name": "베이징", "codes": ["PEK", "PKX"], "team": "China", "pax_25": 759883, "pax_25_q14": 219262, "pax_26_q14": 278893, "tna_25": 12131, "tna_25_q14": 3106, "tna_26_q14": 2896, "share_25": 1.5964299767201002, "share_25_q14": 1.416570130711204, "share_26_q14": 1.0383910675420323, "share_delta": -0.3781790631691717, "months_25_pax": [56136, 48676, 50083, 64367, 67821, 64699, 67506, 64524, 62719, 71308, 69621, 72423], "months_26_pax": [73924, 64255, 66537, 74177], "months_25_tna": [425, 843, 1050, 788, 1444, 1033, 1064, 1018, 1093, 1255, 1159, 959], "months_26_tna": [830, 544, 733, 789], "interest_share_25": 19.401575686386195, "interest_share_25_q14": 22.309133677378767, "interest_share_26_q14": 8.013342424951926, "interest_share_delta": -14.295791252426842, "detail_uv_25": 145005, "purchase_uv_25": 13718, "detail_uv_26": 22144, "purchase_uv_26": 1574, "cvr_25": 9.460363435743595, "cvr_26": 7.108020231213873, "is_transit_outlier": false, "months_25_tna_pax": [425, 843, 1050, 788, 1444, 1033, 1064, 1018, 1093, 1255, 1159, 959], "months_26_tna_pax": [830, 544, 733, 789], "tna_pax_25": 12131, "tna_pax_25_q14": 3106, "tna_pax_26_q14": 2896, "share_pax_25": 1.5964299767201002, "share_pax_25_q14": 1.416570130711204, "share_pax_26_q14": 1.0383910675420323, "share_pax_delta": -0.3781790631691717, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "청도", "codes": ["TAO"], "team": "China", "pax_25": 732467, "pax_25_q14": 220120, "pax_26_q14": 269261, "tna_25": 6382, "tna_25_q14": 388, "tna_26_q14": 5643, "share_25": 0.8713020518330519, "share_25_q14": 0.17626749045974924, "share_26_q14": 2.095736107345661, "share_delta": 1.9194686168859116, "months_25_pax": [57615, 51197, 50756, 60552, 61574, 69124, 67182, 65785, 58698, 64364, 59804, 65816], "months_26_pax": [72866, 63898, 65739, 66758], "months_25_tna": [44, 133, 128, 83, 416, 744, 582, 653, 669, 743, 1115, 1072], "months_26_tna": [1175, 1219, 2277, 972], "interest_share_25": 9.843774947842531, "interest_share_25_q14": 5.785235393055453, "interest_share_26_q14": 6.140453106154485, "interest_share_delta": 0.35521771309903194, "detail_uv_25": 73344, "purchase_uv_25": 4608, "detail_uv_26": 16758, "purchase_uv_26": 1371, "cvr_25": 6.282722513089005, "cvr_26": 8.181167203723595, "is_transit_outlier": false, "months_25_tna_pax": [44, 133, 128, 83, 416, 744, 582, 653, 669, 743, 1115, 1072], "months_26_tna_pax": [1175, 1219, 2277, 972], "tna_pax_25": 6382, "tna_pax_25_q14": 388, "tna_pax_26_q14": 5643, "share_pax_25": 0.8713020518330519, "share_pax_25_q14": 0.17626749045974924, "share_pax_26_q14": 2.095736107345661, "share_pax_delta": 1.9194686168859116, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "시안", "codes": ["XIY"], "team": "China", "pax_25": 108681, "pax_25_q14": 27804, "pax_26_q14": 40259, "tna_25": 526, "tna_25_q14": 74, "tna_26_q14": 331, "share_25": 0.48398524121051517, "share_25_q14": 0.26614875557473744, "share_26_q14": 0.8221764077597556, "share_delta": 0.5560276521850183, "months_25_pax": [6188, 5817, 6733, 9066, 10392, 10535, 10480, 9818, 9143, 11576, 9471, 9462], "months_26_pax": [9326, 9308, 10093, 11532], "months_25_tna": [7, 16, 22, 29, 41, 49, 34, 29, 45, 91, 68, 95], "months_26_tna": [70, 56, 108, 97], "interest_share_25": 19.733661924450754, "interest_share_25_q14": 22.116372743655205, "interest_share_26_q14": 13.315525047413551, "interest_share_delta": -8.800847696241654, "detail_uv_25": 20810, "purchase_uv_25": 831, "detail_uv_26": 4963, "purchase_uv_26": 201, "cvr_25": 3.9932724651609806, "cvr_26": 4.049969776344953, "is_transit_outlier": false, "months_25_tna_pax": [7, 16, 22, 29, 41, 49, 34, 29, 45, 91, 68, 95], "months_26_tna_pax": [70, 56, 108, 97], "tna_pax_25": 526, "tna_pax_25_q14": 74, "tna_pax_26_q14": 331, "share_pax_25": 0.48398524121051517, "share_pax_25_q14": 0.26614875557473744, "share_pax_26_q14": 0.8221764077597556, "share_pax_delta": 0.5560276521850183, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "카오슝", "codes": ["KHH"], "team": "China", "pax_25": 291533, "pax_25_q14": 93725, "pax_26_q14": 101106, "tna_25": 1353, "tna_25_q14": 360, "tna_26_q14": 788, "share_25": 0.4640984039542694, "share_25_q14": 0.3841024273139504, "share_26_q14": 0.7793800565742884, "share_delta": 0.39527762926033805, "months_25_pax": [24190, 23542, 22291, 23702, 21708, 21496, 23911, 26526, 22999, 25073, 26258, 29837], "months_26_pax": [27876, 26342, 24135, 22753], "months_25_tna": [128, 88, 86, 58, 97, 35, 33, 19, 39, 232, 204, 334], "months_26_tna": [337, 187, 165, 99], "interest_share_25": 16.45584177893982, "interest_share_25_q14": 15.46762200931396, "interest_share_26_q14": 9.745474017994308, "interest_share_delta": -5.722147991319652, "detail_uv_25": 48802, "purchase_uv_25": 1875, "detail_uv_26": 10594, "purchase_uv_26": 459, "cvr_25": 3.8420556534568253, "cvr_26": 4.332641117613743, "is_transit_outlier": false, "months_25_tna_pax": [128, 88, 86, 58, 97, 35, 33, 19, 39, 232, 204, 334], "months_26_tna_pax": [337, 187, 165, 99], "tna_pax_25": 1353, "tna_pax_25_q14": 360, "tna_pax_26_q14": 788, "share_pax_25": 0.4640984039542694, "share_pax_25_q14": 0.3841024273139504, "share_pax_26_q14": 0.7793800565742884, "share_pax_delta": 0.39527762926033805, "is_interest_inflated": false, "subregion": "대만"}, {"name": "하얼빈", "codes": ["HRB"], "team": "China", "pax_25": 108056, "pax_25_q14": 33677, "pax_26_q14": 36994, "tna_25": 113, "tna_25_q14": 49, "tna_26_q14": 59, "share_25": 0.10457540534537647, "share_25_q14": 0.1454998960715028, "share_26_q14": 0.15948532194409903, "share_delta": 0.013985425872596241, "months_25_pax": [13430, 8806, 5100, 6341, 7820, 8961, 11462, 11379, 9598, 9754, 7439, 7966], "months_26_pax": [9175, 10480, 7193, 10146], "months_25_tna": [17, 23, 5, 4, 6, 10, 14, 16, 2, 2, 0, 14], "months_26_tna": [31, 13, 11, 4], "interest_share_25": 14.877653953198264, "interest_share_25_q14": 16.421221739010434, "interest_share_26_q14": 11.135303783513947, "interest_share_delta": -5.285917955496487, "detail_uv_25": 15380, "purchase_uv_25": 163, "detail_uv_26": 4258, "purchase_uv_26": 42, "cvr_25": 1.059817945383615, "cvr_26": 0.986378581493659, "is_transit_outlier": false, "months_25_tna_pax": [17, 23, 5, 4, 6, 10, 14, 16, 2, 2, 0, 14], "months_26_tna_pax": [31, 13, 11, 4], "tna_pax_25": 113, "tna_pax_25_q14": 49, "tna_pax_26_q14": 59, "share_pax_25": 0.10457540534537647, "share_pax_25_q14": 0.1454998960715028, "share_pax_26_q14": 0.15948532194409903, "share_pax_delta": 0.013985425872596241, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "항조우", "codes": ["HGH"], "team": "China", "pax_25": 207876, "pax_25_q14": 60182, "pax_26_q14": 78489, "tna_25": 95, "tna_25_q14": 17, "tna_26_q14": 49, "share_25": 0.04570032134541746, "share_25_q14": 0.028247648798644113, "share_26_q14": 0.06242913019658806, "share_delta": 0.03418148139794394, "months_25_pax": [13789, 13250, 14842, 18301, 18262, 18062, 19201, 18651, 17244, 18830, 18749, 18695], "months_26_pax": [20510, 17933, 21043, 19003], "months_25_tna": [4, 2, 6, 5, 12, 4, 6, 4, 12, 16, 7, 17], "months_26_tna": [15, 14, 13, 7], "interest_share_25": 2.5160049426604014, "interest_share_25_q14": 2.5098950953856156, "interest_share_26_q14": 1.3989747661150451, "interest_share_delta": -1.1109203292705705, "detail_uv_25": 5235, "purchase_uv_25": 118, "detail_uv_26": 1074, "purchase_uv_26": 27, "cvr_25": 2.254059216809933, "cvr_26": 2.5139664804469275, "is_transit_outlier": false, "months_25_tna_pax": [4, 2, 6, 5, 12, 4, 6, 4, 12, 16, 7, 17], "months_26_tna_pax": [15, 14, 13, 7], "tna_pax_25": 95, "tna_pax_25_q14": 17, "tna_pax_26_q14": 49, "share_pax_25": 0.04570032134541746, "share_pax_25_q14": 0.028247648798644113, "share_pax_26_q14": 0.06242913019658806, "share_pax_delta": 0.03418148139794394, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "대련", "codes": ["DLC"], "team": "China", "pax_25": 245710, "pax_25_q14": 70378, "pax_26_q14": 97530, "tna_25": 54, "tna_25_q14": 7, "tna_26_q14": 25, "share_25": 0.02197712750803793, "share_25_q14": 0.009946290033817386, "share_26_q14": 0.02563313852148057, "share_delta": 0.015686848487663184, "months_25_pax": [21246, 16600, 15062, 17470, 19323, 19390, 25474, 27221, 22170, 23173, 18101, 20480], "months_26_pax": [25359, 24292, 22388, 25491], "months_25_tna": [0, 2, 4, 1, 4, 4, 3, 10, 11, 7, 3, 5], "months_26_tna": [5, 1, 6, 13], "interest_share_25": 2.2741747252440603, "interest_share_25_q14": 2.0227885723450156, "interest_share_26_q14": 2.475852407379966, "interest_share_delta": 0.4530638350349503, "detail_uv_25": 5551, "purchase_uv_25": 66, "detail_uv_26": 2450, "purchase_uv_26": 16, "cvr_25": 1.1889749594667627, "cvr_26": 0.653061224489796, "is_transit_outlier": false, "months_25_tna_pax": [0, 2, 4, 1, 4, 4, 3, 10, 11, 7, 3, 5], "months_26_tna_pax": [5, 1, 6, 13], "tna_pax_25": 54, "tna_pax_25_q14": 7, "tna_pax_26_q14": 25, "share_pax_25": 0.02197712750803793, "share_pax_25_q14": 0.009946290033817386, "share_pax_26_q14": 0.02563313852148057, "share_pax_delta": 0.015686848487663184, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "센젠", "codes": ["SZX"], "team": "China", "pax_25": 290466, "pax_25_q14": 84906, "pax_26_q14": 111903, "tna_25": 46, "tna_25_q14": 17, "tna_26_q14": 42, "share_25": 0.01583662115359457, "share_25_q14": 0.02002214213365369, "share_26_q14": 0.03753250583094287, "share_delta": 0.017510363697289182, "months_25_pax": [19300, 18658, 20884, 26064, 25227, 23915, 24534, 24449, 22748, 27075, 27849, 29763], "months_26_pax": [30210, 24651, 28897, 28145], "months_25_tna": [4, 4, 4, 5, 8, 4, 1, 2, 2, 2, 3, 7], "months_26_tna": [15, 14, 9, 4], "interest_share_25": 2.8562405785131717, "interest_share_25_q14": 3.265904106666847, "interest_share_26_q14": 1.7788755052307774, "interest_share_delta": -1.4870286014360694, "detail_uv_25": 8270, "purchase_uv_25": 58, "detail_uv_26": 1964, "purchase_uv_26": 21, "cvr_25": 0.7013301088270859, "cvr_26": 1.0692464358452138, "is_transit_outlier": false, "months_25_tna_pax": [4, 4, 4, 5, 8, 4, 1, 2, 2, 2, 3, 7], "months_26_tna_pax": [15, 14, 9, 4], "tna_pax_25": 46, "tna_pax_25_q14": 17, "tna_pax_26_q14": 42, "share_pax_25": 0.01583662115359457, "share_pax_25_q14": 0.02002214213365369, "share_pax_26_q14": 0.03753250583094287, "share_pax_delta": 0.017510363697289182, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "광저우", "codes": ["CAN"], "team": "China", "pax_25": 346533, "pax_25_q14": 103765, "pax_26_q14": 132925, "tna_25": 46, "tna_25_q14": 11, "tna_26_q14": 36, "share_25": 0.01327434905189405, "share_25_q14": 0.010600876981641208, "share_26_q14": 0.02708294150836938, "share_delta": 0.016482064526728173, "months_25_pax": [23053, 23631, 27788, 29293, 26532, 26105, 28782, 28688, 28895, 34102, 34008, 35656], "months_26_pax": [33558, 27741, 35939, 35687], "months_25_tna": [0, 2, 6, 3, 3, 1, 1, 2, 2, 10, 7, 9], "months_26_tna": [8, 4, 10, 14], "interest_share_25": 1.3504158833436735, "interest_share_25_q14": 1.2281672468877118, "interest_share_26_q14": 0.999995082350108, "interest_share_delta": -0.2281721645376038, "detail_uv_25": 4785, "purchase_uv_25": 69, "detail_uv_26": 1223, "purchase_uv_26": 11, "cvr_25": 1.4420062695924765, "cvr_26": 0.8994276369582993, "is_transit_outlier": false, "months_25_tna_pax": [0, 2, 6, 3, 3, 1, 1, 2, 2, 10, 7, 9], "months_26_tna_pax": [8, 4, 10, 14], "tna_pax_25": 46, "tna_pax_25_q14": 11, "tna_pax_26_q14": 36, "share_pax_25": 0.01327434905189405, "share_pax_25_q14": 0.010600876981641208, "share_pax_26_q14": 0.02708294150836938, "share_pax_delta": 0.016482064526728173, "is_interest_inflated": false, "subregion": "중국 본토"}, {"name": "연길", "codes": ["YNJ"], "team": "China", "pax_25": 201698, "pax_25_q14": 74333, "pax_26_q14": 82297, "tna_25": 21, "tna_25_q14": 3, "tna_26_q14": 13, "share_25": 0.010411605469563406, "share_25_q14": 0.004035892537634697, "share_26_q14": 0.015796444584857284, "share_delta": 0.011760552047222587, "months_25_pax": [21947, 17608, 16797, 17981, 24849, 28754, 30296, 15989, 0, 780, 10155, 16542], "months_26_pax": [19341, 23736, 18167, 21053], "months_25_tna": [3, 0, 0, 0, 3, 2, 1, 5, 1, 3, 1, 2], "months_26_tna": [2, 2, 4, 5], "interest_share_25": 3.114571342005903, "interest_share_25_q14": 0.4259368381228093, "interest_share_26_q14": 1.0571622368571216, "interest_share_delta": 0.6312253987343124, "detail_uv_25": 3084, "purchase_uv_25": 36, "detail_uv_26": 906, "purchase_uv_26": 9, "cvr_25": 1.1673151750972763, "cvr_26": 0.9933774834437087, "is_transit_outlier": false, "months_25_tna_pax": [3, 0, 0, 0, 3, 2, 1, 5, 1, 3, 1, 2], "months_26_tna_pax": [2, 2, 4, 5], "tna_pax_25": 21, "tna_pax_25_q14": 3, "tna_pax_26_q14": 13, "share_pax_25": 0.010411605469563406, "share_pax_25_q14": 0.004035892537634697, "share_pax_26_q14": 0.015796444584857284, "share_pax_delta": 0.011760552047222587, "is_interest_inflated": false, "subregion": "중국 본토"}]};
+const fmt = (n) => (n||0).toLocaleString('ko-KR');
+const fmtShort = (n) => {
+  if (Math.abs(n)>=1e8) return (n/1e8).toFixed(1)+'억';
+  if (Math.abs(n)>=1e4) return (n/1e4).toFixed(1)+'만';
+  return fmt(n);
+};
+Chart.defaults.color = '#212529';
+Chart.defaults.font.family = 'Pretendard,-apple-system,sans-serif';
+Chart.defaults.font.size = 12;
+
+const SUB_COLORS = {
+  "중국 본토":"#FA5B4A","홍콩":"#F78000","대만":"#33B893",
+  "마카오":"#8238FA","싱가포르":"#51ABF3"
+};
+const MONTHS_LABEL = ['25년 1월','25년 2월','25년 3월','25년 4월','25년 5월','25년 6월','25년 7월','25년 8월','25년 9월','25년 10월','25년 11월','25년 12월','26년 1월','26년 2월','26년 3월','26년 4월'];
+
+const t = DATA.total;
+const mainland = DATA.subregions.find(s => s.name === "중국 본토");
+
+// 헤더 배너
+document.getElementById('heroBanner').innerHTML = `
+  🔥 <b>한-중 무비자 효과 가시화 — 시장은 폭발인데 MRT는 점유율 하락 중</b><br>
+  · 중화권 항공 출국자 YoY <b>${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}%</b> · T&A 예약자 YoY <b style="color:#5C1A12">${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}%</b><br>
+  · 전체 점유율: <b>${t.share_25_q14.toFixed(2)}%</b> → <b>${t.share_26.toFixed(2)}%</b> (<b style="color:#5C1A12">${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp</b>)<br>
+  · 🎯 <b>유일한 win: 중국 본토 점유율</b> ${mainland.share_25_q14.toFixed(2)}% → <b style="color:#0D3B25">${mainland.share_26.toFixed(2)}%</b> (${mainland.delta>=0?'+':''}${mainland.delta.toFixed(2)}pp) ↑
+`;
+
+// KPI
+const kpis = [
+  {label:'중화권 시장 점유율 (25년)', value:t.share_25.toFixed(2), unit:'%', delta:`매칭 도시 ${t.city_count}개`, cls:'dim', hero:true},
+  {label:'26년 1~4월', value:t.share_26.toFixed(2), unit:'%', delta:`${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp`, cls:t.delta>=0?'up':'down', hero:true},
+  {label:'🇨🇳 중국 본토 점유율 (26 1~4)', value:mainland.share_26.toFixed(2), unit:'%', delta:`${mainland.delta>=0?'+':''}${mainland.delta.toFixed(2)}pp · 유일한 상승!`, cls:'up', win:true},
+  {label:'항공 출국자 YoY', value:`${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}`, unit:'%', delta:'시장 폭발 성장', cls:'up'},
+  {label:'T&A 예약자 YoY', value:`${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}`, unit:'%', delta:'시장 대비 ↓', cls:'down'},
+  {label:'권역 수', value:DATA.subregions.length, unit:'개', delta:'본토·홍콩·대만·마카오·싱가포르', cls:'dim'}
+];
+document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+  <div class="kpi ${k.hero?'hero':''} ${k.win?'win':''}">
+    <div class="label">${k.label}</div>
+    <div class="value">${k.value}<span class="unit">${k.unit}</span></div>
+    <div class="delta ${k.cls}">${k.delta}</div>
+  </div>
+`).join('');
+
+// ===== 권역별 점유율 비교 (25년 vs 26년) =====
+new Chart(document.getElementById('subShareChart'), {
+  type:'bar',
+  data: {
+    labels: DATA.subregions.map(s => s.name),
+    datasets: [
+      {label:'25년 1~4월', data: DATA.subregions.map(s => s.share_25_q14), backgroundColor:'#51ABF3', borderRadius:4},
+      {label:'26년 1~4월', data: DATA.subregions.map(s => s.share_26), backgroundColor:'#FA5B4A', borderRadius:4}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'bottom'},
+      tooltip:{callbacks:{label:c=>{
+        const d = DATA.subregions[c.dataIndex];
+        return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}% (Δ ${d.delta>=0?'+':''}${d.delta.toFixed(2)}pp)`;
+      }}}
+    },
+    scales:{ y:{ ticks:{callback:v=>v+'%'}, title:{display:true, text:'시장 점유율 (%)'} } }
+  }
+});
+
+const winner = DATA.subregions.find(s => s.delta > 0);
+const subInsight = winner ?
+  `🎯 <b>${winner.name}</b>이 유일하게 점유율 상승 (${winner.delta>=0?'+':''}${winner.delta.toFixed(2)}pp). 한-중 무비자 효과로 시장이 폭발 성장하는데 MRT가 그 흐름을 잡고 있음.` :
+  `모든 권역에서 점유율 하락.`;
+document.getElementById('subInsight').innerHTML = subInsight;
+
+// ===== 권역 월별 추이 =====
+new Chart(document.getElementById('subTrendChart'), {
+  type:'line',
+  data: {
+    labels: MONTHS_LABEL,
+    datasets: DATA.subregions.map(s => ({
+      label: s.name,
+      data: [...s.monthly_share_25, ...s.monthly_share_26],
+      borderColor: SUB_COLORS[s.name],
+      backgroundColor: SUB_COLORS[s.name] + '15',
+      tension:0.3, borderWidth:2, pointRadius:2.5, pointHoverRadius:5,
+      spanGaps:true
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{position:'bottom', labels:{font:{size:12.5, weight:'500'}, padding:10, usePointStyle:true, pointStyle:'circle'}},
+      tooltip:{backgroundColor:'rgba(33,37,41,0.95)', padding:12,
+        callbacks:{label:c=>`  ${c.dataset.label}: ${c.parsed.y?c.parsed.y.toFixed(2):'-'}%`}}
+    },
+    scales:{
+      y:{ ticks:{callback:v=>v+'%'}, title:{display:true, text:'시장 점유율 (%)', font:{weight:'600'}}, grid:{color:'rgba(33,37,41,0.06)'} },
+      x:{ ticks:{maxRotation:45, font:{size:11}, autoSkip:false}, grid:{display:false} }
+    }
+  }
+});
+
+// ===== 본토 도시 Top — 시장 vs 유입 =====
+const mlCities = mainland.cities.filter(c => c.pax_25 >= 5000).slice(0, 10);
+new Chart(document.getElementById('mainlandChart'), {
+  type:'bar',
+  data: {
+    labels: mlCities.map(c => `${c.name} (${c.codes.join('·')})`),
+    datasets: [
+      {label:'시장 점유율', data: mlCities.map(c => c.share_25), backgroundColor:'#FA5B4A', borderRadius:3},
+      {label:'유입 점유율', data: mlCities.map(c => c.interest_share_25||0), backgroundColor:'#F78000', borderRadius:3}
+    ]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.x.toFixed(2)}%`}}
+    },
+    scales:{ x:{ ticks:{callback:v=>v+'%'} }, y:{ ticks:{font:{size:11}} } }
+  }
+});
+
+// ===== 본토 YoY 변화 =====
+const mlYoY = mainland.cities.filter(c => c.pax_25_q14 >= 5000 && c.pax_26_q14 >= 5000).sort((a,b)=>b.share_delta-a.share_delta);
+new Chart(document.getElementById('mainlandYoYChart'), {
+  type:'bar',
+  data: {
+    labels: mlYoY.map(c => `${c.name}`),
+    datasets:[{
+      label:'Δ pp', data: mlYoY.map(c => c.share_delta),
+      backgroundColor: mlYoY.map(c => c.share_delta>=0?'#33B893':'#FA5B4A'),
+      borderRadius:3
+    }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>{
+        const d = mlYoY[c.dataIndex];
+        return [`${d.name}`, `25 1~4: ${d.share_25_q14.toFixed(2)}%`, `26 1~4: ${d.share_26_q14.toFixed(2)}%`, `Δ ${d.share_delta>=0?'+':''}${d.share_delta.toFixed(2)}pp`];
+      }}}
+    },
+    scales:{ x:{ ticks:{callback:v=>(v>=0?'+':'')+v.toFixed(1)+'pp'} } }
+  }
+});
+
+// ===== 시장 vs 유입 점유율 (권역별) =====
+new Chart(document.getElementById('shareInterestChart'), {
+  type:'bar',
+  data: {
+    labels: DATA.subregions.map(s => s.name),
+    datasets: [
+      {label:'시장 점유율 (예약)', data: DATA.subregions.map(s => s.share_25), backgroundColor:'#FA5B4A', borderRadius:4},
+      {label:'유입 점유율 (PDP)', data: DATA.subregions.map(s => s.interest_25), backgroundColor:'#F78000', borderRadius:4}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'},
+      tooltip:{callbacks:{label:c=>{
+        const d = DATA.subregions[c.dataIndex];
+        const cvr = d.cvr_25;
+        return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}% / CVR ${cvr.toFixed(1)}%`;
+      }}}
+    },
+    scales:{ y:{ ticks:{callback:v=>v+'%'} } }
+  }
+});
+
+// ===== 한-중 무비자 효과: 항공 YoY vs T&A YoY =====
+const visaData = DATA.subregions.map(s => ({
+  name: s.name,
+  pax_yoy: (s.pax_26 - s.pax_25_q14) / s.pax_25_q14 * 100,
+  tna_yoy: (s.tna_26 - s.tna_25_q14) / s.tna_25_q14 * 100
+}));
+new Chart(document.getElementById('visaImpactChart'), {
+  type:'bar',
+  data: {
+    labels: visaData.map(d => d.name),
+    datasets: [
+      {label:'항공 출국자 YoY (시장 성장)', data: visaData.map(d => d.pax_yoy), backgroundColor:'#51ABF3', borderRadius:4},
+      {label:'T&A 예약자 YoY (MRT 성장)', data: visaData.map(d => d.tna_yoy), backgroundColor:'#FA5B4A', borderRadius:4}
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y>=0?'+':''}${c.parsed.y.toFixed(1)}%`}}
+    },
+    scales:{ y:{ ticks:{callback:v=>(v>=0?'+':'')+v+'%'}, title:{display:true, text:'YoY (%)'} } }
+  }
+});
+
+const ml_pax_yoy = (mainland.pax_26 - mainland.pax_25_q14) / mainland.pax_25_q14 * 100;
+const ml_tna_yoy = (mainland.tna_26 - mainland.tna_25_q14) / mainland.tna_25_q14 * 100;
+document.getElementById('visaInsight').innerHTML = `
+  ⚠️ <b>중화권 전체</b> — 시장(항공) <b>${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}%</b> vs MRT(T&A) <b>${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}%</b>
+  · 격차 <b>${(t.pax_yoy - t.tna_yoy).toFixed(1)}pp</b> = 시장은 커지는데 MRT가 못 따라감.<br>
+  🎯 <b>중국 본토</b> — 시장 <b>${ml_pax_yoy>=0?'+':''}${ml_pax_yoy.toFixed(1)}%</b> vs MRT <b>${ml_tna_yoy>=0?'+':''}${ml_tna_yoy.toFixed(1)}%</b>
+  → 점유율은 +상승 (분자도 늘었으나 분모가 더 빨리 늘어 ↓ 패턴인데, 본토는 분자 성장이 분모 따라감)
+`;
+
+// ===== 테이블 =====
+let html = '<thead><tr>' +
+  '<th>도시</th><th>IATA</th><th>권역</th>' +
+  '<th>25년 항공</th><th>25년 T&A</th><th>25년 시장점유율</th><th>25년 유입점유율</th>' +
+  '<th>26 1~4 항공</th><th>26 1~4 T&A</th><th>26 1~4 시장점유율</th>' +
+  '<th>Δ 시장</th>' +
+  '</tr></thead><tbody>';
+
+DATA.subregions.forEach(sub => {
+  html += `<tr style="background:${SUB_COLORS[sub.name]}15;"><td colspan="11" style="font-weight:600; color:${SUB_COLORS[sub.name]}; padding:8px 10px;">${sub.name} — 도시 ${sub.city_count}개 / 25년 점유율 ${sub.share_25.toFixed(2)}% → 26 1~4 ${sub.share_26.toFixed(2)}%</td></tr>`;
+  sub.cities.forEach(c => {
+    const dcls = c.share_delta>=0?'up':'down';
+    html += `<tr>
+      <td>${c.name}</td>
+      <td>${c.codes.join('·')}</td>
+      <td><span style="background:${SUB_COLORS[sub.name]}22; color:${SUB_COLORS[sub.name]}; padding:2px 8px; border-radius:8px; font-size:11px;">${sub.name}</span></td>
+      <td class="num">${fmt(c.pax_25)}</td>
+      <td class="num">${fmt(c.tna_25)}</td>
+      <td class="num"><b>${c.share_25.toFixed(2)}%</b></td>
+      <td class="num">${(c.interest_share_25||0).toFixed(1)}%</td>
+      <td class="num">${fmt(c.pax_26_q14)}</td>
+      <td class="num">${fmt(c.tna_26_q14)}</td>
+      <td class="num"><b>${c.share_26_q14.toFixed(2)}%</b></td>
+      <td class="num ${dcls}">${c.share_delta>=0?'+':''}${c.share_delta.toFixed(2)}pp</td>
+    </tr>`;
+  });
+});
+html += '</tbody>';
+document.getElementById('cityTable').innerHTML = html;
+</script>
+</body>
+</html>
