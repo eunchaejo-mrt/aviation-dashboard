@@ -130,21 +130,28 @@ def extract_data():
     data/raw/{공항 연도} 폴더에서 전체 여객 엑셀 읽기.
     data/raw/{공항 연도 환승} 폴더가 있으면 환승여객을 차감 (실제 목적지 출국자).
     """
-    folder_pattern = re.compile(r'^(김포|인천)\s*(\d{2})년(\s*환승)?$')
     iata_master = {}
     iata_month = {}
     transit_month = {}  # (year, month, code) -> {pax, gmp_pax, icn_pax}
 
     for folder in sorted(RAW_DIR.iterdir()):
         if not folder.is_dir(): continue
-        m = folder_pattern.match(folder.name)
-        if not m:
-            print(f"⏭️  스킵: {folder.name} (폴더명 패턴 불일치)")
+        name = folder.name
+        # 유연한 폴더명 매칭: "김포 25년", "김포 25년 환승", "김포 환승객 25", "인천 환승객 26" 등
+        airport_kr = None
+        if "김포" in name: airport_kr = "김포"
+        elif "인천" in name: airport_kr = "인천"
+        if not airport_kr:
+            print(f"⏭️  스킵: {name} (공항 인식 안됨)")
             continue
-        airport_kr, year2, is_transit = m.groups()
-        is_transit = bool(is_transit)
+        is_transit = "환승" in name
+        year_match = re.search(r'(\d{2,4})', name)
+        if not year_match:
+            print(f"⏭️  스킵: {name} (연도 인식 안됨)")
+            continue
+        year2 = year_match.group(1)
+        year = int(year2) if len(year2) == 4 else 2000 + int(year2)
         airport = "GMP" if airport_kr == "김포" else "ICN"
-        year = 2000 + int(year2)
         label = "환승" if is_transit else "전체"
         files = list(folder.iterdir())
         if not files:
