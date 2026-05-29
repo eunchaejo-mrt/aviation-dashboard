@@ -82,7 +82,9 @@
   table.cities td.up { color:var(--good); font-weight:600; }
   table.cities td.down { color:var(--bad); font-weight:600; }
   table.cities .warn-cell { background:#FFF7D6; }
-  .table-wrap { max-height:600px; overflow-y:auto; }
+  .table-wrap { max-height:600px; overflow-y:auto; overflow-x:auto; }
+  table.cities th { white-space:nowrap; min-width:60px; }
+  table.cities th:nth-child(n+13) { font-size:10.5px; min-width:60px; } /* 월별 컬럼 */
   input.search { background:var(--panel-2); border:1px solid var(--border); color:var(--text);
     padding:8px 12px; border-radius:6px; font-size:13px; width:240px; margin-bottom:10px; }
   .toggle { display:inline-flex; gap:6px; margin-bottom:12px; }
@@ -171,9 +173,9 @@
     <h2>🆕 26년 1~4월 점유율 Top 30 (토글 — 3지표 전환)</h2>
     <div class="desc">최신 기간 점유율. 환승 의존 도시(점유율 50%+) 자동 제외.</div>
     <div class="toggle" id="top26Toggle">
-      <button class="active" data-type="purchase">💰 구매 점유율</button>
-      <button data-type="interest">👁 관심 점유율 (PDP)</button>
-      <button data-type="cvr">🎯 CVR (전환율)</button>
+      <button class="active" data-type="purchase">거래액</button>
+      <button data-type="interest">유입</button>
+      <button data-type="cvr">전환</button>
     </div>
     <div class="chart-box xtall"><canvas id="top26Chart"></canvas></div>
   </div>
@@ -182,9 +184,9 @@
     <h2>25년 전체 점유율 Top 30 (토글)</h2>
     <div class="desc">2025년 누적. 같은 3가지 지표 비교 가능.</div>
     <div class="toggle" id="top25Toggle">
-      <button class="active" data-type="purchase">💰 구매 점유율</button>
-      <button data-type="interest">👁 관심 점유율 (PDP)</button>
-      <button data-type="cvr">🎯 CVR (전환율)</button>
+      <button class="active" data-type="purchase">거래액</button>
+      <button data-type="interest">유입</button>
+      <button data-type="cvr">전환</button>
     </div>
     <div class="chart-box xtall"><canvas id="top25Chart"></canvas></div>
   </div>
@@ -208,8 +210,8 @@
   </div>
 
   <div class="card col-12">
-    <h2>전체 도시 통합 테이블 — 3가지 지표 동시 표시</h2>
-    <div class="desc">구매·관심·CVR 모두 표시. 정렬·검색 가능.</div>
+    <h2>전체 도시 통합 테이블 — 거래액 · 유입 · 전환 + 월별 거래액 점유율</h2>
+    <div class="desc">환승 의존 도시 제외. 25년 12개월 + 26년 1~4월 거래액 점유율 모두 표시 (월별 컬럼). 우측으로 스크롤하면 월별 점유율 확인 가능.</div>
     <input type="text" class="search" id="citySearch" placeholder="도시·팀·IATA 검색..."/>
     <div class="table-wrap"><table class="cities" id="cityTable"></table></div>
   </div>
@@ -242,7 +244,15 @@ document.getElementById('heroDetail').innerHTML =
 
 const cityLabel = c => `${c.name} (${c.codes.join('·')})`;
 
-// 환승 의존 도시 자동 제외
+// 팀 이름 한글 매핑
+const TEAM_KR = {
+  "China":"중화권", "Japan":"일본", "South-Eastern Asia":"동남아",
+  "Europe-mid":"유럽중부", "Europe-south":"유럽남부",
+  "America":"미주", "Oceania":"대양주"
+};
+const teamKR = t => TEAM_KR[t] || t;
+
+// 환승 의존 도시 자동 제외 (멜버른 등 50%+ 도시)
 const NON_OUTLIER = DATA.cities.filter(c => !c.is_transit_outlier);
 const excludedNames = (DATA.excluded_outliers||[]).join(', ');
 if (excludedNames) document.getElementById('excludedList').textContent = excludedNames;
@@ -260,7 +270,7 @@ const cvr_25 = total_duv_25>0 ? total_puv_25/total_duv_25*100 : 0;
 const cvr_26 = total_duv_26>0 ? total_puv_26/total_duv_26*100 : 0;
 
 const kpis = [
-  {label:'💰 구매 점유율 (26 1~4)', value:t.share_26_q14.toFixed(2), unit:'%', delta:`25 1~4: ${t.share_25_q14.toFixed(2)}% (${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp)`, cls:t.delta>=0?'up':'down', hero:true},
+  {label:'거래액 (26 1~4)', value:t.share_26_q14.toFixed(2), unit:'%', delta:`25 1~4: ${t.share_25_q14.toFixed(2)}% (${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp)`, cls:t.delta>=0?'up':'down', hero:true},
   {label:'👁 관심 점유율 (26 1~4)', value:(t.interest_share_26_q14||0).toFixed(1), unit:'%', delta:`25 1~4: ${(t.interest_share_25_q14||0).toFixed(1)}% (${(t.interest_delta||0)>=0?'+':''}${(t.interest_delta||0).toFixed(1)}pp)`, cls:(t.interest_delta||0)>=0?'up':'down', hero:true},
   {label:'🎯 CVR (전체 가중평균)', value:cvr_26.toFixed(1), unit:'%', delta:`25년: ${cvr_25.toFixed(1)}% (Δ ${(cvr_26-cvr_25).toFixed(1)}pp)`, cls:cvr_26>=cvr_25?'up':'down', hero:true},
   {label:'26년 구매 1위', value:top26P.name, unit:'', delta:`${top26P.share_26_q14.toFixed(1)}% (${top26P.codes.join('·')})`, cls:'dim'},
@@ -408,8 +418,8 @@ new Chart(document.getElementById('teamShareChart'), {
   }
 });
 
-// ===== 권역(팀) 월별 추이 (사용자 요청) =====
-const MONTHS_LABEL = ['25-01','25-02','25-03','25-04','25-05','25-06','25-07','25-08','25-09','25-10','25-11','25-12','26-01','26-02','26-03','26-04'];
+// ===== 권역(팀) 월별 추이 — 한글 라벨 + 가시성 강화 =====
+const MONTHS_LABEL = ['25년 1월','25년 2월','25년 3월','25년 4월','25년 5월','25년 6월','25년 7월','25년 8월','25년 9월','25년 10월','25년 11월','25년 12월','26년 1월','26년 2월','26년 3월','26년 4월'];
 const TEAM_COLORS = {
   "China":"#FA5B4A","Japan":"#F78000","South-Eastern Asia":"#33B893",
   "Europe-mid":"#51ABF3","Europe-south":"#8238FA","America":"#3A95DD","Oceania":"#0D9488"
@@ -419,33 +429,70 @@ new Chart(document.getElementById('teamTrendChart'), {
   type:'line',
   data: {
     labels: MONTHS_LABEL,
-    datasets: teamTrends.map(t => ({
-      label: t.team.replace('South-Eastern Asia','SEA'),
-      data: [...t.share_25_monthly, ...t.share_26_monthly],
-      borderColor: TEAM_COLORS[t.team] || '#666',
-      backgroundColor: 'transparent',
-      tension: 0.3, borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 6,
-      spanGaps: true
-    }))
+    datasets: teamTrends.map(t => {
+      const color = TEAM_COLORS[t.team] || '#666';
+      return {
+        label: teamKR(t.team),
+        data: [...t.share_25_monthly, ...t.share_26_monthly],
+        borderColor: color,
+        backgroundColor: color + '15',
+        tension: 0.3, borderWidth: 3,
+        pointRadius: 4, pointHoverRadius: 7,
+        pointBackgroundColor: color,
+        spanGaps: true,
+        // 26년 1~4월 구간(인덱스 12~15)은 굵게 보여주려고 일반 라인 + 마지막 4점 강조용 추가는 복잡하니 우선 두께만
+      };
+    })
   },
   options: {
     responsive:true, maintainAspectRatio:false,
-    interaction:{mode:'index',intersect:false},
+    interaction:{mode:'index', intersect:false},
     plugins:{
-      legend:{position:'bottom'},
-      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y?c.parsed.y.toFixed(2):'-'}%`}},
-      annotation: undefined
+      legend:{
+        position:'bottom',
+        labels:{ font:{size:13, weight:'600'}, padding:12, usePointStyle:true, pointStyle:'circle' }
+      },
+      tooltip:{
+        backgroundColor:'rgba(33,37,41,0.95)', padding:12, titleFont:{size:13}, bodyFont:{size:12.5},
+        callbacks:{
+          title: items => items[0].label,
+          label: c => `  ${c.dataset.label.padEnd(6)} ${c.parsed.y?c.parsed.y.toFixed(2):'-'}%`
+        }
+      }
     },
     scales:{
-      y:{ ticks:{callback:v=>v+'%'}, title:{display:true,text:'점유율 %'} },
-      x:{ ticks:{maxRotation:0, font:{size:11}}, title:{display:true,text:'월 (25년 1월 → 26년 4월)'} }
+      y:{
+        ticks:{ callback:v=>v+'%', font:{size:12} },
+        title:{display:true, text:'점유율 (%)', font:{size:12, weight:'600'}},
+        grid:{color:'rgba(33,37,41,0.06)'}
+      },
+      x:{
+        ticks:{ maxRotation:45, minRotation:0, font:{size:11}, autoSkip:false },
+        title:{display:true, text:'월', font:{size:12, weight:'600'}},
+        grid:{display:false}
+      }
     }
+  }
+});
+
+// ===== 통합 테이블 — 환승 도시 완전 제외 + 월별 컬럼 + 한글 라벨 =====
+const MONTH_KEYS_25 = ['25-01','25-02','25-03','25-04','25-05','25-06','25-07','25-08','25-09','25-10','25-11','25-12'];
+const MONTH_KEYS_26 = ['26-01','26-02','26-03','26-04'];
+
+// 도시별 월별 거래액 점유율 미리 계산 (cities에 _share_m25_X, _share_m26_X 추가)
+NON_OUTLIER.forEach(c => {
+  for (let i=0; i<12; i++) {
+    c[`share_m25_${i}`] = (c.months_25_pax[i]>0) ? (c.months_25_tna[i]/c.months_25_pax[i]*100) : null;
+  }
+  for (let i=0; i<4; i++) {
+    c[`share_m26_${i}`] = (c.months_26_pax[i]>0) ? (c.months_26_tna[i]/c.months_26_pax[i]*100) : null;
   }
 });
 
 let sortKey = 'share_26_q14', sortDir = -1;
 function renderTable(filter='') {
-  const sorted = [...DATA.cities].sort((a,b)=>{
+  // 환승 의존 도시 완전 제외
+  const sorted = [...NON_OUTLIER].sort((a,b)=>{
     let va = a[sortKey], vb = b[sortKey];
     if (typeof va==='string') return sortDir * va.localeCompare(vb);
     return sortDir * ((va||0)-(vb||0));
@@ -454,40 +501,55 @@ function renderTable(filter='') {
     const f = filter.toLowerCase();
     return c.name.toLowerCase().includes(f) || (c.team||'').toLowerCase().includes(f) || c.codes.join(',').toLowerCase().includes(f);
   });
-  const head = `<thead><tr>
+
+  // 헤더: 도시 / IATA / 팀 / 25년 요약 (거래액·유입·전환) / 월별 거래액 점유율 (16개) / Δ
+  let head = `<thead><tr>
     <th data-k="name">도시</th>
     <th data-k="codes">IATA</th>
     <th data-k="team">팀</th>
-    <th data-k="pax_25">항공 25</th>
-    <th data-k="tna_25">T&A 25</th>
-    <th data-k="share_25">💰 25</th>
-    <th data-k="interest_share_25">👁 25</th>
-    <th data-k="cvr_25">🎯 25</th>
-    <th data-k="pax_26_q14">항공 26Q1</th>
-    <th data-k="tna_26_q14">T&A 26Q1</th>
-    <th data-k="share_26_q14">💰 26Q1</th>
-    <th data-k="interest_share_26_q14">👁 26Q1</th>
-    <th data-k="cvr_26">🎯 26Q1</th>
-    <th data-k="share_delta">Δ구매</th>
-  </tr></thead>`;
+    <th data-k="pax_25">25년 항공</th>
+    <th data-k="tna_25">25년 T&A</th>
+    <th data-k="share_25" title="T&A 여행자수 ÷ 항공 출국자수">거래액 점유율 (25년)</th>
+    <th data-k="interest_share_25" title="PDP UV ÷ 항공 출국자수">유입 점유율 (25년)</th>
+    <th data-k="cvr_25" title="구매 UV ÷ PDP UV">전환율 (25년)</th>
+    <th data-k="share_26_q14">거래액 점유율 (26년 1~4월)</th>
+    <th data-k="interest_share_26_q14">유입 점유율 (26년 1~4월)</th>
+    <th data-k="cvr_26">전환율 (26년 1~4월)</th>
+    <th data-k="share_delta">Δ 거래액 (pp)</th>`;
+  // 월별 거래액 점유율 헤더
+  ['25년 1월','25년 2월','25년 3월','25년 4월','25년 5월','25년 6월','25년 7월','25년 8월','25년 9월','25년 10월','25년 11월','25년 12월'].forEach((m,i)=>{
+    head += `<th data-k="share_m25_${i}" title="${m} 거래액 점유율">${m}</th>`;
+  });
+  ['26년 1월','26년 2월','26년 3월','26년 4월'].forEach((m,i)=>{
+    head += `<th data-k="share_m26_${i}" title="${m} 거래액 점유율">${m}</th>`;
+  });
+  head += `</tr></thead>`;
+
   const rows = sorted.map(c => {
-    const warn = c.share_25 >= 50 || c.share_26_q14 >= 50 ? 'warn-cell' : '';
     const dcls = c.share_delta>=0?'up':'down';
+    let monthCells = '';
+    for (let i=0; i<12; i++) {
+      const v = c[`share_m25_${i}`];
+      monthCells += `<td class="num">${v!==null ? v.toFixed(2)+'%' : '-'}</td>`;
+    }
+    for (let i=0; i<4; i++) {
+      const v = c[`share_m26_${i}`];
+      monthCells += `<td class="num" style="background:#FFF7D6">${v!==null ? v.toFixed(2)+'%' : '-'}</td>`;
+    }
     return `<tr>
-      <td class="${warn}">${(c.share_25>=50||c.share_26_q14>=50)?'⚠️ ':''}${c.name}</td>
+      <td>${c.name}</td>
       <td>${c.codes.join('·')}</td>
-      <td>${(c.team||'').replace('South-Eastern Asia','SEA')}</td>
+      <td>${teamKR(c.team)}</td>
       <td class="num">${fmt(c.pax_25)}</td>
       <td class="num">${fmt(c.tna_25)}</td>
       <td class="num"><b>${c.share_25.toFixed(2)}%</b></td>
       <td class="num">${(c.interest_share_25||0).toFixed(1)}%</td>
       <td class="num">${(c.cvr_25||0).toFixed(1)}%</td>
-      <td class="num">${fmt(c.pax_26_q14)}</td>
-      <td class="num">${fmt(c.tna_26_q14)}</td>
       <td class="num"><b>${c.share_26_q14.toFixed(2)}%</b></td>
       <td class="num">${(c.interest_share_26_q14||0).toFixed(1)}%</td>
       <td class="num">${(c.cvr_26||0).toFixed(1)}%</td>
       <td class="num ${dcls}">${c.share_delta>=0?'+':''}${c.share_delta.toFixed(2)}</td>
+      ${monthCells}
     </tr>`;
   }).join('');
   document.getElementById('cityTable').innerHTML = head + '<tbody>' + rows + '</tbody>';
