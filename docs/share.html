@@ -32,6 +32,23 @@
     padding:18px 22px; margin:20px 0; box-shadow:var(--shadow);
   }
   .formula-box h3 { margin:0 0 12px 0; font-size:15px; color:var(--accent-2); }
+  .formula-box .simple {
+    background:#E8F4FD; padding:14px 18px; border-radius:8px;
+    margin-bottom:14px; font-size:14px; line-height:1.85; color:#1B4866;
+  }
+  .formula-box .simple b { color:#0B2D4C; font-weight:700; }
+  .formula-box .simple .item {
+    display:flex; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(58,149,221,0.25);
+  }
+  .formula-box .simple .item:last-child { border-bottom:none; }
+  .formula-box .simple .emoji { font-size:24px; line-height:1; flex-shrink:0; }
+  .formula-box .simple .body { flex:1; }
+  .formula-box .simple .title { font-weight:700; color:#0B2D4C; font-size:14.5px; margin-bottom:3px; }
+  .formula-box .simple .desc-line { font-size:13px; color:#1B4866; }
+  .formula-box .simple .example {
+    font-size:12px; color:#3A6B8C; margin-top:3px;
+    background:rgba(255,255,255,0.6); padding:5px 10px; border-radius:4px; display:inline-block;
+  }
   .formula-box pre {
     background:#F8F9FA; padding:12px 14px; border-radius:6px;
     font-family:"SF Mono","Monaco",monospace; font-size:12px; line-height:1.65;
@@ -134,7 +151,46 @@
 
   <div class="formula-box">
     <h3>📐 점유율 계산법 — 3가지 지표</h3>
-<pre>① 구매 점유율 (Market Share)  — "실제 시장 점유"
+
+    <div class="simple">
+      <div style="margin-bottom:8px; font-weight:600; color:#0B2D4C; font-size:13.5px;">
+        💡 쉽게 말하면 — 도쿄로 출국한 100명을 예로 들어보자
+      </div>
+      <div class="item">
+        <div class="emoji">🛒</div>
+        <div class="body">
+          <div class="title">시장 점유율 (Market Share)</div>
+          <div class="desc-line">도쿄 가는 100명 중 <b>몇 명이 마이리얼트립에서 예약</b>했는가?</div>
+          <div class="example">예: 7명이 예약하면 → 시장 점유율 7%</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="emoji">👀</div>
+        <div class="body">
+          <div class="title">유입 점유율 (Awareness)</div>
+          <div class="desc-line">도쿄 가는 100명 중 <b>몇 명이 우리 사이트에서 도쿄 상품을 구경</b>했는가? (구매 안 해도 OK)</div>
+          <div class="example">예: 30명이 도쿄 상품 PDP 봤으면 → 유입 점유율 30%</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="emoji">💳</div>
+        <div class="body">
+          <div class="title">전환율 (CVR)</div>
+          <div class="desc-line">상품 본 사람 중 <b>몇 명이 실제로 결제</b>까지 갔는가?</div>
+          <div class="example">예: 30명 보고 3명 결제 → 전환율 10%</div>
+        </div>
+      </div>
+      <div style="margin-top:10px; padding:8px 12px; background:#FFF7D6; border-radius:6px; font-size:12.5px; color:#7A5A00;">
+        ✨ <b>3가지 동시 추적</b>으로 어디가 문제인지 진단:
+        유입 ↓ + 시장 ↓ → <b>인지도 위기</b> (마케팅 강화) ·
+        유입 → + 시장 ↓ → <b>전환 위기</b> (PDP·체크아웃 개선) ·
+        유입 ↑ + 시장 ↑ → 정상 성장
+      </div>
+    </div>
+
+    <details style="margin-bottom:10px;">
+      <summary style="cursor:pointer; font-size:13px; color:var(--text-dim); padding:6px 0;">🔧 정확한 수식·데이터 출처 (개발자용)</summary>
+<pre>① 시장 점유율 (Market Share)  — "실제 시장 점유"
     = T&A 여행자수 ÷ 항공 출국자수 × 100
     분자: Redash MART_SALE_D
           - kind=1 (T&A), mrt_type IN ('tour','ticket')
@@ -164,6 +220,7 @@
    ✗ 잘못된 방법: sum(UV) / sum(PAX)
        → distinct UV의 12개월 합은 중복 발생 (한 사람이 매월 보면 12)
        → 항공 출국자 (1년 1번)과 단위 안 맞음</pre>
+    </details>
     <div class="note">
       ⚠️ <b>왜 100%+ 점유율이 나오는 도시가 있나? (멜버른 사례)</b><br>
       항공통계는 <b>직항 노선 기준</b>이라 환승 패턴이 큰 도시는 분모(출국자)가 비현실적으로 작게 잡힙니다.
@@ -481,8 +538,8 @@ new Chart(document.getElementById('teamTrendChart'), {
         data: [...t.share_25_monthly, ...t.share_26_monthly],
         borderColor: color,
         backgroundColor: color + '15',
-        tension: 0.3, borderWidth: 3,
-        pointRadius: 4, pointHoverRadius: 7,
+        tension: 0.3, borderWidth: 2,
+        pointRadius: 2.5, pointHoverRadius: 5,
         pointBackgroundColor: color,
         spanGaps: true,
         // 26년 1~4월 구간(인덱스 12~15)은 굵게 보여주려고 일반 라인 + 마지막 4점 강조용 추가는 복잡하니 우선 두께만
@@ -593,7 +650,7 @@ function renderCityTrend() {
       label: `${c.name} (${c.codes.join('·')})${c.is_transit_outlier?' ⚠️':''}`,
       data: cityMonthlyShare(c),
       borderColor: color, backgroundColor: color+'15',
-      tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 7,
+      tension: 0.3, borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5,
       pointBackgroundColor: color, spanGaps: true
     };
   }).filter(Boolean);
@@ -612,7 +669,7 @@ function renderCityTrend() {
         label: `[권역 평균] ${teamKR(t)}`,
         data: [...trend.share_25_monthly, ...trend.share_26_monthly],
         borderColor: color, backgroundColor: 'transparent',
-        tension: 0.3, borderWidth: 2, pointRadius: 2, pointHoverRadius: 5,
+        tension: 0.3, borderWidth: 1.5, pointRadius: 1.5, pointHoverRadius: 4,
         borderDash: [6,4], spanGaps: true
       });
     });
