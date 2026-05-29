@@ -249,8 +249,8 @@ new Chart(document.getElementById('trendChart'), {
   data: {
     labels: MONTHS,
     datasets: [
-      {label:'2025', data: t.months_25, borderColor:'#FA5B4A', backgroundColor:'rgba(250,91,74,0.15)', tension:0.3, borderWidth:2.5, pointRadius:3, fill:true},
-      {label:'2026', data:[...t.months_26, null,null,null,null,null,null,null,null], borderColor:'#1F2937', backgroundColor:'transparent', tension:0.3, borderWidth:3, pointRadius:5, borderDash:[]}
+      {label:'2025', data: t.months_25, borderColor:'#51ABF3', backgroundColor:'rgba(81,171,243,0.18)', tension:0.3, borderWidth:3, pointRadius:3, fill:true},
+      {label:'2026', data:[...t.months_26, null,null,null,null,null,null,null,null], borderColor:'#FA5B4A', backgroundColor:'rgba(250,91,74,0.18)', tension:0.3, borderWidth:3, pointRadius:5, fill:true}
     ]
   },
   options: {
@@ -354,8 +354,8 @@ DATA.subregions.forEach((sub, si) => {
     data: {
       labels: MONTHS,
       datasets:[
-        {label:'2025', data: sub.months_25, borderColor:color, backgroundColor:color+'30', tension:0.3, borderWidth:3, pointRadius:3, fill:true},
-        {label:'2026', data:[...sub.months_26, null,null,null,null,null,null,null,null], borderColor:'#1F2937', backgroundColor:'transparent', tension:0.3, borderWidth:2.5, pointRadius:5, borderDash:[]}
+        {label:'2025', data: sub.months_25, borderColor:'#51ABF3', backgroundColor:'rgba(81,171,243,0.18)', tension:0.3, borderWidth:3, pointRadius:3, fill:true},
+        {label:'2026', data:[...sub.months_26, null,null,null,null,null,null,null,null], borderColor:'#FA5B4A', backgroundColor:'rgba(250,91,74,0.18)', tension:0.3, borderWidth:3, pointRadius:5, fill:true}
       ]
     },
     options:{ responsive:true, maintainAspectRatio:false,

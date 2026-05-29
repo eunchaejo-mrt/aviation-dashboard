@@ -247,10 +247,10 @@ new Chart(document.getElementById('trendChart'), {
   data: {
     labels: MONTHS,
     datasets: [
-      {label:'ICN 2025', data: MONTHS.map((_,i)=>DATA.ts.ICN_2025.find(x=>x.month===i+1)?.pax||null), borderColor:'#51ABF3', backgroundColor:'rgba(81,171,243,0.15)', tension:0.3, borderWidth:2.5, pointRadius:3, fill:true},
-      {label:'ICN 2026', data: MONTHS.map((_,i)=>DATA.ts.ICN_2026.find(x=>x.month===i+1)?.pax||null), borderColor:'#1F2937', backgroundColor:'transparent', tension:0.3, borderWidth:3, pointRadius:5, borderDash:[]},
-      {label:'GMP 2025', data: MONTHS.map((_,i)=>DATA.ts.GMP_2025.find(x=>x.month===i+1)?.pax||null), borderColor:'#FA5B4A', backgroundColor:'rgba(250,91,74,0.12)', tension:0.3, borderWidth:2.5, pointRadius:3, fill:true},
-      {label:'GMP 2026', data: MONTHS.map((_,i)=>DATA.ts.GMP_2026.find(x=>x.month===i+1)?.pax||null), borderColor:'#8238FA', backgroundColor:'transparent', tension:0.3, borderWidth:3, pointRadius:5, borderDash:[]},
+      {label:'ICN 2025', data: MONTHS.map((_,i)=>DATA.ts.ICN_2025.find(x=>x.month===i+1)?.pax||null), borderColor:'#51ABF3', backgroundColor:'rgba(81,171,243,0.15)', tension:0.3, borderWidth:3, pointRadius:4, fill:true},
+      {label:'ICN 2026', data: MONTHS.map((_,i)=>DATA.ts.ICN_2026.find(x=>x.month===i+1)?.pax||null), borderColor:'#FA5B4A', backgroundColor:'rgba(250,91,74,0.15)', tension:0.3, borderWidth:3, pointRadius:4, fill:true},
+      {label:'GMP 2025', data: MONTHS.map((_,i)=>DATA.ts.GMP_2025.find(x=>x.month===i+1)?.pax||null), borderColor:'#1E5A93', backgroundColor:'transparent', tension:0.3, borderWidth:2, pointRadius:3},
+      {label:'GMP 2026', data: MONTHS.map((_,i)=>DATA.ts.GMP_2026.find(x=>x.month===i+1)?.pax||null), borderColor:'#B23022', backgroundColor:'transparent', tension:0.3, borderWidth:2, pointRadius:3},
     ]
   },
   options: {
@@ -370,8 +370,8 @@ DATA.teams.forEach((team, ti) => {
     data: {
       labels: MONTHS,
       datasets:[
-        {label:'2025', data: team.months_25, borderColor: meta.color, backgroundColor: meta.color+'30', tension:0.3, borderWidth:3, pointRadius:3, fill:true},
-        {label:'2026', data: [...team.months_26, null,null,null,null,null,null,null,null], borderColor:'#1F2937', backgroundColor:'transparent', tension:0.3, borderWidth:3, pointRadius:5, borderDash:[]}
+        {label:'2025', data: team.months_25, borderColor:'#51ABF3', backgroundColor:'rgba(81,171,243,0.18)', tension:0.3, borderWidth:3, pointRadius:3, fill:true},
+        {label:'2026', data: [...team.months_26, null,null,null,null,null,null,null,null], borderColor:'#FA5B4A', backgroundColor:'rgba(250,91,74,0.18)', tension:0.3, borderWidth:3, pointRadius:5, fill:true}
       ]
     },
     options:{
