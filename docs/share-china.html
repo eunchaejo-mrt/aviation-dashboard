@@ -34,6 +34,29 @@
     font-size:13.5px; line-height:1.7; color:#7C2419;
   }
   .hero-banner b { color:#5C1A12; }
+
+  .formula-box {
+    background:#FFFFFF; border:2px solid #51ABF3; border-radius:12px;
+    padding:18px 22px; margin:20px 0; box-shadow:var(--shadow);
+  }
+  .formula-box h3 { margin:0 0 12px 0; font-size:15px; color:#3A95DD; }
+  .formula-box .simple {
+    background:#E8F4FD; padding:14px 18px; border-radius:8px;
+    margin-bottom:8px; font-size:14px; line-height:1.85; color:#1B4866;
+  }
+  .formula-box .simple b { color:#0B2D4C; font-weight:700; }
+  .formula-box .simple .item {
+    display:flex; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(58,149,221,0.25);
+  }
+  .formula-box .simple .item:last-child { border-bottom:none; }
+  .formula-box .simple .emoji { font-size:24px; line-height:1; flex-shrink:0; }
+  .formula-box .simple .body { flex:1; }
+  .formula-box .simple .title { font-weight:700; color:#0B2D4C; font-size:14.5px; margin-bottom:3px; }
+  .formula-box .simple .desc-line { font-size:13px; color:#1B4866; }
+  .formula-box .simple .example {
+    font-size:12px; color:#3A6B8C; margin-top:3px;
+    background:rgba(255,255,255,0.6); padding:5px 10px; border-radius:4px; display:inline-block;
+  }
   .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:20px 0 24px 0; }
   .kpi { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow); }
   .kpi .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }
@@ -92,6 +115,44 @@
     <a href="./china.html">🐼 중화권 항공</a>
     <a href="./share.html">📊 전체 점유율</a>
   </div>
+  <div class="formula-box">
+    <h3>📐 점유율 계산법 — 2가지 지표</h3>
+    <div class="simple">
+      <div style="margin-bottom:8px; font-weight:600; color:#0B2D4C; font-size:13.5px;">
+        💡 쉽게 말하면 — 상하이로 출국한 100명을 예로 들어보자
+      </div>
+      <div class="item">
+        <div class="emoji">🛒</div>
+        <div class="body">
+          <div class="title">시장 점유율 (Market Share)</div>
+          <div class="desc-line">상하이 가는 100명 중 <b>몇 명이 마이리얼트립으로 예약</b>해서 갔는가?</div>
+          <div style="margin-top:6px; padding:8px 12px; background:#FFFFFF; border:1px solid #C8E2F8; border-radius:6px; font-size:12.5px; color:#1B4866; line-height:1.7;">
+            📐 <b>계산법</b>: 마이리얼트립 <b>이용 인원수</b> (PAX 합산, 동행자 포함) ÷ <b>KTO 한국인 출국자수</b> × 100<br>
+            <span style="color:#3A6B8C;">
+            ※ 분자: TRAVEL_ID 단위로 묶고 그 여행의 max 예약 인원수(RESVE_PRSNL_CNT) 사용. 1여행=1, 동행자 N명이면 N으로 합산. 취소 제외.<br>
+            ※ 분모: 한국관광공사(KTO) 한국인 해외관광객 통계. 외국인·환승객 자동 제외. <span style="background:#FFF7D6; padding:1px 6px; border-radius:3px;">중국은 KTO 미수신 → 항공통계 × 50.8% 역산 적용</span></span>
+          </div>
+          <div class="example">예: 상하이 KTO 100명 中 MRT 예약 인원 8명 → <b>시장 점유율 8%</b></div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="emoji">👀</div>
+        <div class="body">
+          <div class="title">유입 점유율 (Awareness) <span style="font-size:11px; color:#7A5A00; background:#FFF7D6; padding:2px 8px; border-radius:6px; font-weight:500; margin-left:4px;">⚠️ 100%+ 정상</span></div>
+          <div class="desc-line">상하이 가는 100명 중 <b>몇 명이 우리 사이트에서 상하이 상품을 구경</b>했는가? (구매 안 해도 OK)</div>
+          <div style="margin-top:6px; padding:8px 12px; background:#FFFFFF; border:1px solid #C8E2F8; border-radius:6px; font-size:12.5px; color:#1B4866; line-height:1.7;">
+            📐 <b>계산법</b>: 마이리얼트립 상하이 상품 <b>PDP 본 사용자 수</b> (PID 기준 월간 고유) ÷ KTO 한국인 출국자수 × 100<br>
+            <span style="color:#3A6B8C;">※ PID 단위 → 한 사람이 PDP를 100번 봐도 월 1로 카운트. 회원·비회원 디바이스 통합 식별.</span>
+          </div>
+          <div style="margin-top:6px; padding:8px 12px; background:#FFF7D6; border-radius:6px; font-size:12px; color:#7A5A00; line-height:1.7;">
+            🤔 <b>왜 100%+ 나오는 도시가 있나?</b> 분자(PDP 본 사람)에는 출국 안 한 사람·검색만 한 사람·계획만 세운 사람도 모두 포함되기 때문. <b>"관심도 지표"</b>로 해석 (점유율 X).
+          </div>
+          <div class="example">예: 상하이 KTO 100명 中 상하이 PDP 본 사람 50명 → <b>유입 점유율 50%</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="hero-banner" id="heroBanner">-</div>
 
   <div style="margin-top:10px; padding:10px 14px; background:#E8F4FD; border-left:3px solid #51ABF3; border-radius:6px; font-size:12.5px; color:#1B4866; line-height:1.65;">
@@ -129,7 +190,7 @@
 
   <!-- 중국 도시 YoY 변화 -->
   <div class="card col-6">
-    <h2>🚀 중국 도시 시장 점유율 YoY (26년 1~4월 vs 25년 1~4월)</h2>
+    <h2>🚀 중국 도시 시장 점유율 변화 (26년 1~4월 vs 25년 1~4월 동기간 비교)</h2>
     <div class="desc">상하이 + 신규도시 한-중 무비자 효과 정량화.</div>
     <div class="chart-box"><canvas id="mainlandYoYChart"></canvas></div>
   </div>
@@ -144,7 +205,7 @@
   <!-- 한-중 무비자 효과 정량화 -->
   <div class="card col-12">
     <h2>✈️ 한-중 무비자 효과 정량화 — 시장은 커지는데 MRT는?</h2>
-    <div class="desc">항공 출국자 YoY vs T&A 예약자 YoY 비교. 본토는 시장이 폭발 성장하는데 MRT 점유율이 따라가는지가 핵심.</div>
+    <div class="desc">항공 출국자 증감률(26 1~4 vs 25 1~4) vs T&A 예약자 증감률 비교. 본토는 시장이 폭발 성장하는데 MRT 점유율이 따라가는지가 핵심.</div>
     <div class="chart-box"><canvas id="visaImpactChart"></canvas></div>
     <div class="insight bad" id="visaInsight"></div>
   </div>
@@ -152,7 +213,7 @@
   <!-- 전체 도시 테이블 -->
   <div class="card col-12">
     <h2>📋 중화권 도시별 점유율 통합 테이블</h2>
-    <div class="desc">권역별로 그룹화. 시장·유입·전환·YoY 모두 표시.</div>
+    <div class="desc">권역별로 그룹화. 시장·유입·전환·동기간 변화 모두 표시.</div>
     <div style="overflow-x:auto;"><table class="cities" id="cityTable"></table></div>
   </div>
 
@@ -190,7 +251,7 @@ const mainland = DATA.subregions.find(s => s.name === "중국 신규도시");
 // 헤더 배너
 document.getElementById('heroBanner').innerHTML = `
   🔥 <b>한-중 무비자 효과 가시화 — 시장은 폭발인데 MRT는 점유율 하락 중</b><br>
-  · 중화권 항공 출국자 YoY <b>${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}%</b> · T&A 예약자 YoY <b style="color:#5C1A12">${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}%</b><br>
+  · 중화권 항공 출국자 (26 1~4월 vs 25 1~4월): <b>${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}%</b> · T&A 예약자 (동기간): <b style="color:#5C1A12">${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}%</b><br>
   · 전체 점유율: <b>${t.share_25_q14.toFixed(2)}%</b> → <b>${t.share_26.toFixed(2)}%</b> (<b style="color:#5C1A12">${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp</b>)<br>
   · 🎯 <b>상하이</b> ${shanghai.share_25_q14.toFixed(2)}% → <b style="color:#0D3B25">${shanghai.share_26.toFixed(2)}%</b> (${shanghai.delta>=0?'+':''}${shanghai.delta.toFixed(2)}pp) · <b>중국 신규도시</b> ${mainland.share_25_q14.toFixed(2)}% → <b style="color:#0D3B25">${mainland.share_26.toFixed(2)}%</b> (${mainland.delta>=0?'+':''}${mainland.delta.toFixed(2)}pp) ↑ 둘 다 상승
 `;
@@ -201,8 +262,8 @@ const kpis = [
   {label:'26년 1~4월', value:t.share_26.toFixed(2), unit:'%', delta:`${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp`, cls:t.delta>=0?'up':'down', hero:true},
   {label:'🌟 상하이 점유율 (26 1~4)', value:shanghai.share_26.toFixed(2), unit:'%', delta:`${shanghai.delta>=0?'+':''}${shanghai.delta.toFixed(2)}pp · 디즈니랜드 핵심!`, cls:'up', win:true},
   {label:'🚀 중국 신규도시 점유율 (26 1~4)', value:mainland.share_26.toFixed(2), unit:'%', delta:`${mainland.delta>=0?'+':''}${mainland.delta.toFixed(2)}pp · 무비자 효과`, cls:'up', win:true},
-  {label:'항공 출국자 YoY', value:`${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}`, unit:'%', delta:'시장 폭발 성장', cls:'up'},
-  {label:'T&A 예약자 YoY', value:`${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}`, unit:'%', delta:'시장 대비 ↓', cls:'down'},
+  {label:'항공 출국자 (26 1~4 vs 25 1~4)', value:`${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}`, unit:'%', delta:'시장 폭발 성장', cls:'up'},
+  {label:'T&A 예약자 (26 1~4 vs 25 1~4)', value:`${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}`, unit:'%', delta:'시장 대비 ↓', cls:'down'},
   {label:'권역 수', value:DATA.subregions.length, unit:'개', delta:'본토·홍콩·대만·마카오·싱가포르', cls:'dim'}
 ];
 document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
@@ -294,7 +355,7 @@ new Chart(document.getElementById('mainlandChart'), {
   }
 });
 
-// ===== 중국 도시 (상하이 + 신규도시) YoY 변화 =====
+// ===== 중국 도시 (상하이 + 신규도시) 동기간 점유율 변화 (26 1~4 vs 25 1~4) =====
 const mlYoY = [...shanghai.cities, ...mainland.cities]
   .filter(c => c.pax_25_q14 >= 5000 && c.pax_26_q14 >= 5000)
   .sort((a,b) => b.share_delta - a.share_delta);
@@ -343,7 +404,7 @@ new Chart(document.getElementById('shareInterestChart'), {
   }
 });
 
-// ===== 한-중 무비자 효과: 항공 YoY vs T&A YoY =====
+// ===== 한-중 무비자 효과: 항공 증감률 vs T&A 증감률 (26 1~4 vs 25 1~4) =====
 const visaData = DATA.subregions.map(s => ({
   name: s.name,
   pax_yoy: (s.pax_26 - s.pax_25_q14) / s.pax_25_q14 * 100,
@@ -354,8 +415,8 @@ new Chart(document.getElementById('visaImpactChart'), {
   data: {
     labels: visaData.map(d => d.name),
     datasets: [
-      {label:'항공 출국자 YoY (시장 성장)', data: visaData.map(d => d.pax_yoy), backgroundColor:'#51ABF3', borderRadius:4},
-      {label:'T&A 예약자 YoY (MRT 성장)', data: visaData.map(d => d.tna_yoy), backgroundColor:'#FA5B4A', borderRadius:4}
+      {label:'항공 출국자 (26 1~4 vs 25 1~4)', data: visaData.map(d => d.pax_yoy), backgroundColor:'#51ABF3', borderRadius:4},
+      {label:'T&A 예약자 (26 1~4 vs 25 1~4)', data: visaData.map(d => d.tna_yoy), backgroundColor:'#FA5B4A', borderRadius:4}
     ]
   },
   options:{
