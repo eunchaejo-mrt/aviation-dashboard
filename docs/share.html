@@ -293,7 +293,7 @@
   <!-- 🏙 도시별 추이 (도시 담당자용) -->
   <div class="card col-12">
     <h2>🏙 도시별 월별 시장 점유율 추이 — 도시 담당자용</h2>
-    <div class="desc">담당 도시를 클릭해 비교. 최대 8개까지 동시 표시. 권역 평균과 비교 가능. 환승 의존 도시(⚠️)도 검색 가능 (단 점유율 부정확).</div>
+    <div class="desc">담당 도시를 클릭해 비교 (최대 8개). <b>분모: KTO 한국인 출국자수</b> · ⚠️ 도시는 KTO 미수신 → 인천·김포 출발 항공통계 기준.</div>
 
     <div style="margin-bottom:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
       <input type="text" id="cityTrendSearch" placeholder="🔍 도시명·IATA 검색..." class="search" style="width:280px; margin-bottom:0;"/>
@@ -314,7 +314,7 @@
 
   <div class="card col-12">
     <h2>🆕 26년 1~4월 점유율 Top 30 (토글 — 3지표 전환)</h2>
-    <div class="desc">최신 기간 점유율. 환승 의존 도시(점유율 50%+) 자동 제외.</div>
+    <div class="desc">최신 기간 점유율. <b>분모: KTO 한국인 출국자수</b> · ⚠️ 마크 도시는 KTO 미수신 → 인천·김포 출발 항공통계 기준. 환승 의존 도시(50%+) 자동 제외.</div>
     <div class="toggle" id="top26Toggle">
       <button class="active" data-type="purchase">거래액</button>
       <button data-type="interest">유입</button>
@@ -325,7 +325,7 @@
 
   <div class="card col-12">
     <h2>25년 전체 점유율 Top 30 (토글)</h2>
-    <div class="desc">2025년 누적. 같은 3가지 지표 비교 가능.</div>
+    <div class="desc">2025년 누적. <b>분모: KTO 한국인 출국자수</b> · ⚠️ 마크 도시는 KTO 미수신 → 인천·김포 출발 항공통계 기준.</div>
     <div class="toggle" id="top25Toggle">
       <button class="active" data-type="purchase">거래액</button>
       <button data-type="interest">유입</button>
@@ -335,13 +335,14 @@
   </div>
 
   <div class="card col-12">
-    <h2>점유율 YoY 변화 — 26년 1~4월 vs 25년 1~4월 (구매 점유율 기준)</h2>
-    <div class="desc">초록↑ 점유율 상승 / 빨강↓ 점유율 하락. 항공 5천명+ 도시만.</div>
+    <h2>점유율 변화 — 26년 1~4월 vs 25년 1~4월 (시장 점유율 기준)</h2>
+    <div class="desc">초록↑ 점유율 상승 / 빨강↓ 점유율 하락. <b>분모: KTO 한국인 출국자수</b> · ⚠️ 마크 도시는 KTO 미수신 → 인천·김포 출발 항공통계 기준. 5천명+ 도시만.</div>
     <div class="chart-box tall"><canvas id="shareDeltaChart"></canvas></div>
   </div>
 
   <div class="card col-6">
-    <h2>항공 출국자수 Top 20 도시 — T&A 예약자수 절대 비교 (25년)</h2>
+    <h2>출국자수 Top 20 도시 — T&A 예약자수 절대 비교 (25년)</h2>
+    <div class="desc" style="margin-bottom:10px;">분모는 <b>KTO 한국인 출국자수</b> 기준. ⚠️ 마크 도시는 KTO 미수신 → 인천·김포 출발 항공통계 기준.</div>
     <div class="desc">절대 규모 비교 — 빈 영역 = 침투 여력</div>
     <div class="chart-box tall"><canvas id="absChart"></canvas></div>
   </div>
@@ -392,7 +393,7 @@ document.getElementById('heroDetail').innerHTML =
    · 👁 관심: <b>${(t.interest_share_25_q14||0).toFixed(1)}% → ${(t.interest_share_26_q14||0).toFixed(1)}%</b> (${(t.interest_delta||0)>=0?'+':''}${(t.interest_delta||0).toFixed(1)}pp).
    항공 +7.9% 늘었지만 MRT 두 지표 동반 ↓ → <b>인지도·점유 동시 위기</b>`;
 
-const cityLabel = c => `${c.name} (${c.codes.join('·')})`;
+const cityLabel = c => `${c.name}${c.kto_available===false?' ⚠️':''} (${c.codes.join('·')})`;
 
 // 팀 이름 한글 매핑
 const TEAM_KR = {
@@ -661,7 +662,7 @@ function renderCityChips() {
       teamKR(c.team).toLowerCase().includes(search);
     const cls = `city-chip${sel?' selected':''}${c.is_transit_outlier?' outlier':''}${matched?'':' hidden'}`;
     return `<span class="${cls}" data-name="${c.name}">
-      ${c.name}<span class="code">${c.codes.join('·')}</span>
+      ${c.name}${c.kto_available===false?' ⚠️':''}<span class="code">${c.codes.join('·')}</span>
     </span>`;
   }).join('');
   document.getElementById('cityChips').innerHTML = chips;
@@ -695,7 +696,7 @@ function renderCityTrend() {
     if (!c) return null;
     const color = CITY_PALETTE[idx % CITY_PALETTE.length];
     return {
-      label: `${c.name} (${c.codes.join('·')})${c.is_transit_outlier?' ⚠️':''}`,
+      label: `${c.name}${c.kto_available===false?' ⚠️':''} (${c.codes.join('·')})${c.is_transit_outlier?' (환승)':''}`,
       data: cityMonthlyShare(c),
       borderColor: color, backgroundColor: color+'15',
       tension: 0.3, borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 5,
