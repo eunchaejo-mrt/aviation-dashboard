@@ -114,17 +114,17 @@
     <div class="chart-box tall"><canvas id="subTrendChart"></canvas></div>
   </div>
 
-  <!-- 본토 도시 Top 10 -->
+  <!-- 중국 도시 (상하이 + 신규도시) Top -->
   <div class="card col-6">
-    <h2>🇨🇳 중국 신규도시별 점유율 (25년)</h2>
-    <div class="desc">신규도시 9개 중 점유율 높은 순. 시장 점유율 / 유입 점유율 비교.</div>
+    <h2>🇨🇳 중국 도시별 점유율 (25년)</h2>
+    <div class="desc">상하이 + 신규도시 10개 중 점유율 높은 순. 시장 점유율 / 유입 점유율 비교.</div>
     <div class="chart-box"><canvas id="mainlandChart"></canvas></div>
   </div>
 
-  <!-- 본토 26년 YoY 변화 -->
+  <!-- 중국 도시 YoY 변화 -->
   <div class="card col-6">
-    <h2>🚀 중국 신규도시 시장 점유율 YoY (26년 1~4월 vs 25년 1~4월)</h2>
-    <div class="desc">한-중 무비자 효과로 신규도시 다수가 점유율 상승.</div>
+    <h2>🚀 중국 도시 시장 점유율 YoY (26년 1~4월 vs 25년 1~4월)</h2>
+    <div class="desc">상하이 + 신규도시 한-중 무비자 효과 정량화.</div>
     <div class="chart-box"><canvas id="mainlandYoYChart"></canvas></div>
   </div>
 
@@ -265,8 +265,11 @@ new Chart(document.getElementById('subTrendChart'), {
   }
 });
 
-// ===== 본토 도시 Top — 시장 vs 유입 =====
-const mlCities = mainland.cities.filter(c => c.pax_25 >= 5000).slice(0, 10);
+// ===== 중국 도시 (상하이 + 신규도시) Top — 시장 vs 유입 =====
+const mlCities = [...shanghai.cities, ...mainland.cities]
+  .filter(c => c.pax_25 >= 5000)
+  .sort((a,b) => b.share_25 - a.share_25)
+  .slice(0, 15);
 new Chart(document.getElementById('mainlandChart'), {
   type:'bar',
   data: {
@@ -285,8 +288,10 @@ new Chart(document.getElementById('mainlandChart'), {
   }
 });
 
-// ===== 본토 YoY 변화 =====
-const mlYoY = mainland.cities.filter(c => c.pax_25_q14 >= 5000 && c.pax_26_q14 >= 5000).sort((a,b)=>b.share_delta-a.share_delta);
+// ===== 중국 도시 (상하이 + 신규도시) YoY 변화 =====
+const mlYoY = [...shanghai.cities, ...mainland.cities]
+  .filter(c => c.pax_25_q14 >= 5000 && c.pax_26_q14 >= 5000)
+  .sort((a,b) => b.share_delta - a.share_delta);
 new Chart(document.getElementById('mainlandYoYChart'), {
   type:'bar',
   data: {
