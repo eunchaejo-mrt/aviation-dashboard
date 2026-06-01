@@ -190,10 +190,10 @@
     <div class="chart-box tall"><canvas id="subTrendChart"></canvas></div>
   </div>
 
-  <!-- 권역 월별 유입 점유율 추이 (신규) -->
+  <!-- 권역 월별 유입 점유율 추이 -->
   <div class="card col-12">
-    <h2>👀 권역별 월별 유입 점유율 추이 (PDP UV / KTO 출국자)</h2>
-    <div class="desc">권역별 유입 점유율 트렌드 — 한국인 출국자 중 우리 PDP를 본 비율. 26년은 1~2월만 (PDP UV 3·4월 미추출). 100%+는 환승·관심자 포함 정상.</div>
+    <h2>👀 권역별 월별 유입 점유율 추이</h2>
+    <div class="desc">권역별 한국인 출국자 중 우리 사이트 상품(PDP)을 본 비율. <b>25년 1월 ~ 26년 2월</b>까지 표시 (PDP UV 3~4월 데이터 미수신).</div>
     <div class="chart-box tall"><canvas id="subInterestTrendChart"></canvas></div>
   </div>
 
@@ -213,8 +213,13 @@
 
   <!-- 시장 vs 유입 점유율 -->
   <div class="card col-12">
-    <h2>💎 권역별 시장 점유율 vs 유입 점유율 (25년)</h2>
-    <div class="desc">시장 점유율(파랑) = 실제 예약 점유 / 유입 점유율(주황) = 사이트 관심도. 둘의 격차가 클수록 CVR 약점.</div>
+    <h2>💎 권역별 — "관심"과 "실제 예약" 격차 분석 (25년)</h2>
+    <div class="desc" style="line-height:1.8;">
+      그 권역 가는 한국인 100명 기준:<br>
+      · <span style="background:#FA5B4A;color:white;padding:1px 8px;border-radius:3px;font-weight:600;">🛒 빨강 = 시장 점유율</span> — 우리한테 <b>실제 예약</b>한 사람 수<br>
+      · <span style="background:#F78000;color:white;padding:1px 8px;border-radius:3px;font-weight:600;">👀 주황 = 유입 점유율</span> — 우리 상품을 <b>구경만 한 사람</b> 수 (예약은 안 함)<br>
+      💡 <b>주황 ≫ 빨강 (격차 큼)</b> = 관심은 있는데 결제 전환이 약함 → <b>PDP·가격·체크아웃 UX 개선 필요</b>
+    </div>
     <div class="chart-box"><canvas id="shareInterestChart"></canvas></div>
   </div>
 
@@ -355,14 +360,15 @@ new Chart(document.getElementById('subTrendChart'), {
   }
 });
 
-// ===== 권역 월별 유입 점유율 추이 (PDP UV / 항공) =====
+// ===== 권역 월별 유입 점유율 추이 — 14개월 (25년 1월 ~ 26년 2월) =====
+const MONTHS_LABEL_INTEREST = MONTHS_LABEL.slice(0, 14); // 26년 3·4월 제외
 new Chart(document.getElementById('subInterestTrendChart'), {
   type:'line',
   data: {
-    labels: MONTHS_LABEL,
+    labels: MONTHS_LABEL_INTEREST,
     datasets: DATA.subregions.map(s => ({
       label: s.name,
-      data: [...(s.monthly_interest_25 || []), ...(s.monthly_interest_26 || [])],
+      data: [...(s.monthly_interest_25 || []), ...(s.monthly_interest_26 || []).slice(0,2)], // 26년 1~2월만
       borderColor: SUB_COLORS[s.name],
       backgroundColor: SUB_COLORS[s.name] + '15',
       tension:0.3, borderWidth:2, pointRadius:2.5, pointHoverRadius:5,
@@ -378,7 +384,7 @@ new Chart(document.getElementById('subInterestTrendChart'), {
         callbacks:{label:c=>`  ${c.dataset.label}: ${c.parsed.y?c.parsed.y.toFixed(2):'-'}%`}}
     },
     scales:{
-      y:{ ticks:{callback:v=>v+'%'}, title:{display:true, text:'유입 점유율 (PDP UV / 출국자, %)', font:{weight:'600'}}, grid:{color:'rgba(33,37,41,0.06)'} },
+      y:{ ticks:{callback:v=>v+'%'}, title:{display:true, text:'유입 점유율 (%)', font:{weight:'600'}}, grid:{color:'rgba(33,37,41,0.06)'} },
       x:{ ticks:{maxRotation:45, font:{size:11}, autoSkip:false}, grid:{display:false} }
     }
   }
