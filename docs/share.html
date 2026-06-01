@@ -99,6 +99,17 @@
   table.cities td.up { color:var(--good); font-weight:600; }
   table.cities td.down { color:var(--bad); font-weight:600; }
   table.cities .warn-cell { background:#FFF7D6; }
+  .auto-insights { display:flex; flex-direction:column; gap:12px; }
+  .insight-item { padding:14px 18px; border-radius:8px; border-left:4px solid; }
+  .insight-item.up { background:#E8F7F0; border-left-color:#33B893; color:#0D3B25; }
+  .insight-item.down { background:#FFF0EE; border-left-color:#FA5B4A; color:#7C2419; }
+  .insight-item.neutral { background:#E8F4FD; border-left-color:#51ABF3; color:#1B4866; }
+  .insight-item.warn { background:#FFF7D6; border-left-color:#FFBF00; color:#7A5A00; }
+  .insight-item h4 { margin:0 0 6px 0; font-size:14.5px; font-weight:700; }
+  .insight-item .summary { font-size:13px; line-height:1.7; }
+  .insight-item .summary b { font-weight:700; }
+  .insight-item ul { margin:6px 0 0 0; padding-left:22px; font-size:12.5px; line-height:1.7; }
+  .insight-item li { margin:2px 0; }
   .table-wrap { max-height:600px; overflow-y:auto; overflow-x:auto; }
   table.cities th { white-space:nowrap; min-width:60px; }
   table.cities th:nth-child(n+13) { font-size:10.5px; min-width:60px; } /* 월별 컬럼 */
@@ -346,6 +357,13 @@
     <div class="desc">환승 의존 도시 제외. 25년 12개월 + 26년 1~4월 시장 점유율 모두 표시 (월별 컬럼). 우측으로 스크롤하면 월별 점유율 확인 가능.</div>
     <input type="text" class="search" id="citySearch" placeholder="도시·팀·IATA 검색..."/>
     <div class="table-wrap"><table class="cities" id="cityTable"></table></div>
+  </div>
+
+  <!-- 🤖 자동 인사이트 분석 -->
+  <div class="card col-12" style="margin-top:16px;">
+    <h2>🤖 자동 인사이트 분석 — 데이터 기반 요약</h2>
+    <div class="desc">매월 갱신. YoY 증가율 · MoM 추세 · 항공 수요 변화 · 종합 진단</div>
+    <div id="autoInsights" class="auto-insights"></div>
   </div>
 </div>
 
@@ -873,6 +891,97 @@ function renderTable(filter='') {
 }
 renderTable();
 document.getElementById('citySearch').addEventListener('input',e=>renderTable(e.target.value));
+
+// ===== 🤖 자동 인사이트 생성 =====
+(function generateInsights() {
+  const valid = NON_OUTLIER.filter(c => c.pax_25_q14 >= 5000);
+  // 1. YoY 시장 점유율 상승 Top 5
+  const growShare = [...valid].filter(c => c.share_delta > 0).sort((a,b) => b.share_delta - a.share_delta).slice(0,5);
+  // 2. YoY 시장 점유율 하락 Top 5
+  const declShare = [...valid].filter(c => c.share_delta < 0).sort((a,b) => a.share_delta - b.share_delta).slice(0,5);
+  // 3. 항공 출국자 감소 도시 (수요 감소)
+  const declAir = [...valid].filter(c => c.pax_26_q14 > 0 && c.pax_25_q14 > 0).map(c => ({
+    ...c, airYoY: (c.pax_26_q14 - c.pax_25_q14) / c.pax_25_q14 * 100
+  })).filter(c => c.airYoY < -5).sort((a,b) => a.airYoY - b.airYoY).slice(0,5);
+  // 4. MoM 26년 1~4월 점유율 하락 (4월/1월 점유율 비교)
+  const momDecl = [];
+  valid.forEach(c => {
+    const m1 = c.share_m26_0, m4 = c.share_m26_3;
+    if (m1 !== null && m4 !== null && m1 > 0 && m4 > 0 && m1 > m4) {
+      momDecl.push({...c, momDrop: m4 - m1});
+    }
+  });
+  momDecl.sort((a,b) => a.momDrop - b.momDrop);
+  // 5. 점유율 ↑ + 시장 ↑ (시너지)
+  const winners = [...valid].filter(c => c.share_delta > 0 && c.pax_26_q14 > c.pax_25_q14)
+    .sort((a,b) => b.share_delta - a.share_delta).slice(0,5);
+
+  const t = DATA.totals;
+  const fmtcity = (c, value) => `<b>${c.name}</b>(${value})`;
+
+  const items = [];
+  // 종합
+  items.push({
+    cls: t.delta >= 0 ? 'up' : 'down',
+    title: `📊 전체 시장 진단 (26년 1~4월 vs 25년 1~4월)`,
+    body: `전체 시장 점유율: <b>${t.share_25_q14.toFixed(2)}% → ${t.share_26_q14.toFixed(2)}%</b> (${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp).
+           ${t.delta < 0 ? '시장이 우리보다 빠르게 성장 중. 점유율 회복 필요.' : '점유율 성장 중. 모멘텀 유지.'}
+           매칭 도시 ${valid.length}개 분석.`
+  });
+
+  if (growShare.length > 0) {
+    items.push({
+      cls:'up',
+      title:`🚀 시장 점유율 상승 Top 5`,
+      body: `MRT 시장 점유율이 가장 빠르게 오른 도시 (26 1~4 vs 25 1~4)`,
+      list: growShare.map(c => `${c.name}: ${c.share_25_q14.toFixed(2)}% → ${c.share_26_q14.toFixed(2)}% (<b>+${c.share_delta.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (declShare.length > 0) {
+    items.push({
+      cls:'down',
+      title:`📉 시장 점유율 하락 Top 5 — 위협 신호`,
+      body: `우리 점유가 빠지는 도시. 액션 우선순위.`,
+      list: declShare.map(c => `${c.name}: ${c.share_25_q14.toFixed(2)}% → ${c.share_26_q14.toFixed(2)}% (<b>${c.share_delta.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (declAir.length > 0) {
+    items.push({
+      cls:'warn',
+      title:`✈️ 항공 수요 감소 도시 Top 5 — 시장 자체가 줄어듦`,
+      body: `한국발 출국자 자체가 줄어드는 곳. 점유율보다 시장 회복이 우선.`,
+      list: declAir.map(c => `${c.name}: 항공 ${(c.airYoY).toFixed(1)}% ↓ (${c.pax_25_q14.toLocaleString()}→${c.pax_26_q14.toLocaleString()}명)`)
+    });
+  }
+
+  if (momDecl.length > 0) {
+    items.push({
+      cls:'down',
+      title:`📉 26년 MoM 추세 하락 Top 5 — 1월 → 4월 점유율 ↓`,
+      body: `26년 1월 대비 4월 점유율이 가장 많이 빠진 도시. 최근 모멘텀 약화.`,
+      list: momDecl.slice(0,5).map(c => `${c.name}: 1월 ${c.share_m26_0.toFixed(2)}% → 4월 ${c.share_m26_3.toFixed(2)}% (<b>${c.momDrop.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (winners.length > 0) {
+    items.push({
+      cls:'up',
+      title:`🎯 점유율 ↑ + 시장 ↑ 시너지 도시 Top 5 — 강점 강화 포인트`,
+      body: `시장도 커지고 우리 점유도 늘어나는 이상적 도시. 투자 집중 후보.`,
+      list: winners.map(c => `${c.name}: 점유율 +${c.share_delta.toFixed(2)}pp · 항공 ${((c.pax_26_q14-c.pax_25_q14)/c.pax_25_q14*100).toFixed(1)}% ↑`)
+    });
+  }
+
+  document.getElementById('autoInsights').innerHTML = items.map(it => `
+    <div class="insight-item ${it.cls}">
+      <h4>${it.title}</h4>
+      <div class="summary">${it.body}</div>
+      ${it.list ? '<ul>' + it.list.map(li => `<li>${li}</li>`).join('') + '</ul>' : ''}
+    </div>
+  `).join('');
+})();
 </script>
 </body>
 </html>

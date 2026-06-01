@@ -98,6 +98,15 @@
   table.cities td.num { font-variant-numeric:tabular-nums; }
 
   footer { color:var(--text-dim); font-size:11px; margin-top:30px; text-align:center; }
+  .auto-insights { display:flex; flex-direction:column; gap:12px; }
+  .insight-item { padding:14px 18px; border-radius:8px; border-left:4px solid; }
+  .insight-item.up { background:#E8F7F0; border-left-color:#33B893; color:#0D3B25; }
+  .insight-item.down { background:#FFF0EE; border-left-color:#FA5B4A; color:#7C2419; }
+  .insight-item.neutral { background:#E8F4FD; border-left-color:#51ABF3; color:#1B4866; }
+  .insight-item.warn { background:#FFF7D6; border-left-color:#FFBF00; color:#7A5A00; }
+  .insight-item h4 { margin:0 0 6px 0; font-size:14.5px; font-weight:700; }
+  .insight-item .summary { font-size:13px; line-height:1.7; }
+  .insight-item ul { margin:6px 0 0 0; padding-left:22px; font-size:12.5px; line-height:1.7; }
 </style>
 </head>
 <body>
@@ -215,6 +224,13 @@
     <h2>📋 중화권 도시별 점유율 통합 테이블</h2>
     <div class="desc">권역별로 그룹화. 시장·유입·전환·동기간 변화 모두 표시.</div>
     <div style="overflow-x:auto;"><table class="cities" id="cityTable"></table></div>
+  </div>
+
+  <!-- 🤖 자동 인사이트 -->
+  <div class="card col-12">
+    <h2>🤖 자동 인사이트 분석 — 중화권 종합</h2>
+    <div class="desc">권역·도시별 YoY · MoM 추세 · 한-중 무비자 효과 · 종합 진단</div>
+    <div id="autoInsights" class="auto-insights"></div>
   </div>
 
 </div>
@@ -466,6 +482,102 @@ DATA.subregions.forEach(sub => {
 });
 html += '</tbody>';
 document.getElementById('cityTable').innerHTML = html;
+
+// ===== 🤖 자동 인사이트 (중화권) =====
+(function generateInsights() {
+  const allChinaCities = [];
+  DATA.subregions.forEach(sub => {
+    sub.cities.forEach(c => {
+      if (!c.is_transit_outlier && c.pax_25_q14 >= 5000) {
+        allChinaCities.push({...c, subregion: sub.name});
+      }
+    });
+  });
+  // 시장 점유율 상승 / 하락
+  const growShare = [...allChinaCities].filter(c => c.share_delta > 0).sort((a,b) => b.share_delta - a.share_delta).slice(0,5);
+  const declShare = [...allChinaCities].filter(c => c.share_delta < 0).sort((a,b) => a.share_delta - b.share_delta).slice(0,5);
+  // 항공 출국자 변화
+  const airChange = allChinaCities.map(c => ({
+    ...c, airYoY: (c.pax_26_q14 - c.pax_25_q14) / c.pax_25_q14 * 100
+  }));
+  const airGrow = [...airChange].filter(c => c.airYoY > 5).sort((a,b) => b.airYoY - a.airYoY).slice(0,5);
+  const airDecl = [...airChange].filter(c => c.airYoY < -5).sort((a,b) => a.airYoY - b.airYoY).slice(0,5);
+  // 권역별 변화
+  const subWin = DATA.subregions.filter(s => s.delta > 0).sort((a,b)=>b.delta-a.delta);
+  const subLose = DATA.subregions.filter(s => s.delta < 0).sort((a,b)=>a.delta-b.delta);
+
+  const items = [];
+  // 한-중 무비자 효과 핵심
+  items.push({
+    cls: t.tna_yoy >= 0 ? 'up' : 'down',
+    title: `🎯 한-중 무비자 효과 정량화 (26 1~4월 vs 25 1~4월)`,
+    body: `항공 출국자: <b>${t.pax_yoy>=0?'+':''}${t.pax_yoy.toFixed(1)}%</b> · T&A 예약자: <b>${t.tna_yoy>=0?'+':''}${t.tna_yoy.toFixed(1)}%</b>.<br>
+           시장은 ${t.pax_yoy>=0?'성장':'위축'} 중인데 MRT는 ${t.tna_yoy>=0?'함께 성장':'못 따라감'} → 시장 점유율 ${t.delta>=0?'+':''}${t.delta.toFixed(2)}pp.
+           ${t.pax_yoy > t.tna_yoy ? '⚠️ 시장이 MRT보다 빠르게 큼 — 점유율 회복 액션 필요.' : '✅ MRT가 시장 성장과 동기화.'}`
+  });
+
+  if (subWin.length > 0) {
+    items.push({
+      cls:'up',
+      title:`🚀 시장 점유율 상승 권역`,
+      body: `중화권에서 점유율이 늘어난 권역.`,
+      list: subWin.map(s => `<b>${s.name}</b>: ${s.share_25_q14.toFixed(2)}% → ${s.share_26.toFixed(2)}% (<b>+${s.delta.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (subLose.length > 0) {
+    items.push({
+      cls:'down',
+      title:`📉 시장 점유율 하락 권역`,
+      body: `점유율 위협 — 액션 우선순위.`,
+      list: subLose.map(s => `<b>${s.name}</b>: ${s.share_25_q14.toFixed(2)}% → ${s.share_26.toFixed(2)}% (<b>${s.delta.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (growShare.length > 0) {
+    items.push({
+      cls:'up',
+      title:`🎯 도시별 점유율 상승 Top 5 — 강점 강화 후보`,
+      body: `MRT 점유율이 가장 빠르게 오른 중화권 도시.`,
+      list: growShare.map(c => `${c.name} (${c.subregion}): ${c.share_25_q14.toFixed(2)}% → ${c.share_26_q14.toFixed(2)}% (<b>+${c.share_delta.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (declShare.length > 0) {
+    items.push({
+      cls:'down',
+      title:`⚠️ 도시별 점유율 하락 Top 5 — 즉각 액션 필요`,
+      body: `점유율이 빠지는 도시 — 원인 진단 + 회복 액션.`,
+      list: declShare.map(c => `${c.name} (${c.subregion}): ${c.share_25_q14.toFixed(2)}% → ${c.share_26_q14.toFixed(2)}% (<b>${c.share_delta.toFixed(2)}pp</b>)`)
+    });
+  }
+
+  if (airGrow.length > 0) {
+    items.push({
+      cls:'neutral',
+      title:`✈️ 항공 출국자 폭증 Top 5 — 시장 확대 도시`,
+      body: `한-중 무비자 효과로 한국발 출국자가 빠르게 증가. 시장 기회.`,
+      list: airGrow.map(c => `${c.name}: ${(c.pax_25_q14).toLocaleString()} → ${(c.pax_26_q14).toLocaleString()}명 (<b>+${c.airYoY.toFixed(1)}%</b>)`)
+    });
+  }
+
+  if (airDecl.length > 0) {
+    items.push({
+      cls:'warn',
+      title:`📉 항공 출국자 감소 도시 — 수요 위축`,
+      body: `시장 자체가 줄어드는 도시. 점유율보다 시장 모니터링 우선.`,
+      list: airDecl.map(c => `${c.name}: ${(c.pax_25_q14).toLocaleString()} → ${(c.pax_26_q14).toLocaleString()}명 (<b>${c.airYoY.toFixed(1)}%</b>)`)
+    });
+  }
+
+  document.getElementById('autoInsights').innerHTML = items.map(it => `
+    <div class="insight-item ${it.cls}">
+      <h4>${it.title}</h4>
+      <div class="summary">${it.body}</div>
+      ${it.list ? '<ul>' + it.list.map(li => `<li>${li}</li>`).join('') + '</ul>' : ''}
+    </div>
+  `).join('');
+})();
 </script>
 </body>
 </html>
