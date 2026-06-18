@@ -374,59 +374,37 @@ def aggregate(iata_master, iata_month):
 # =============================================================================
 # 3) 중국 데이터 분리
 # =============================================================================
-def build_china(main_data):
-    china = next((t for t in main_data["teams"] if t["team"]=="China"), None)
-    if not china:
-        return None
+ def build_china(main_data):
+      # 일본 6개 도시만 추출 (도쿄, 삿포로, 오사카, 후쿠오카, 오키나와, 나고야)
+      ALLOWED_IATA = {"NRT","HND","CTS","KIX","ITM","FUK","OKA","NGO","NKM"}
+      japan = next((t for t in main_data["teams"] if t["team"]=="Japan"), None)
+      if not japan:
+          return None
 
-    mainland = {"PVG","SHA","PEK","PKX","TAO","HRB","DYG","DLC","CKG","XIY","LJG","XMN","SZX",
-                "HGH","CAN","CTU","KMG","WUH","CSX","TSN","SHE","CGO","NKG","SJW","NNG","FOC","KWE","KWL",
-                "HET","TNA","HAK","SYX","WNZ","NGB","HFE","NBS","WUS","WUX","BHY","YIH","CGD","SWA","JJN",
-                "CIH","YIW","ZUH","HIA","RIZ","INC","DSN","CGQ","JHG","DLU","KHN","XUZ","YNT","WEH","LXA","YIN",
-                "YNJ","TFU","YTY","JMU","MDG","TXN","DAT","TYN","ENH","WDS","BAR","YNZ"}
-    hk = {"HKG"}; macau = {"MFM"}
-    taiwan = {"TPE","TSA","RMQ","KHH","HUN","MZG"}; sg = {"SIN"}
+      cities = [c for c in japan["cities"] if set(c["codes"]) & ALLOWED_IATA]
+      if not cities:
+          return None
 
-    def classify(codes):
-        s = set(codes)
-        if s & hk: return "홍콩"
-        if s & macau: return "마카오"
-        if s & taiwan: return "대만"
-        if s & sg: return "싱가포르"
-        if s & mainland: return "중국 본토"
-        return "기타"
+      n_months = len(main_data["meta"]["curr_months"])
+      total_25 = sum(c["pax_25"] for c in cities)
+      total_25_q14 = sum(c["pax_25_q14"] for c in cities)
+      total_26_q14 = sum(c["pax_26_q14"] for c in cities)
+      yoy = (total_26_q14 - total_25_q14) / total_25_q14 * 100 if total_25_q14 > 0 else None
+      months_25 = [sum(c["months_25"][i] for c in cities) for i in range(12)]
+      months_26 = [sum(c["months_26"][i] for c in cities) for i in range(n_months)]
 
-    for c in china["cities"]:
-        c["subregion"] = classify(c["codes"])
+      japan_data = {
+          "team": "Japan", "city_count": len(cities),
+          "pax_25": total_25, "pax_25_q14": total_25_q14, "pax_26_q14": total_26_q14,
+          "yoy": yoy, "months_25": months_25, "months_26": months_26,
+          "cities": sorted(cities, key=lambda x: -x["pax_25"])
+      }
 
-    sub_agg = defaultdict(lambda: {"cities":[],"pax_25":0,"pax_25_q14":0,"pax_26_q14":0,
-                                     "months_25":[0]*12,"months_26":[0]*len(main_data["meta"]["curr_months"])})
-    for c in china["cities"]:
-        s = c["subregion"]
-        sub_agg[s]["cities"].append(c)
-        sub_agg[s]["pax_25"] += c["pax_25"]
-        sub_agg[s]["pax_25_q14"] += c["pax_25_q14"]
-        sub_agg[s]["pax_26_q14"] += c["pax_26_q14"]
-        for i in range(12): sub_agg[s]["months_25"][i] += c["months_25"][i]
-        for i in range(len(c["months_26"])): sub_agg[s]["months_26"][i] += c["months_26"][i]
+      return {
+          "team": japan_data, "subregions": [],
+          "total_25": total_25, "total_yoy": yoy
+      }
 
-    SUB_ORDER = ["중국 본토","홍콩","대만","마카오","싱가포르"]
-    subregions = []
-    for s in SUB_ORDER:
-        if s not in sub_agg: continue
-        a = sub_agg[s]
-        cities = sorted(a["cities"], key=lambda x:-x["pax_25"])
-        yoy = (a["pax_26_q14"]-a["pax_25_q14"])/a["pax_25_q14"]*100 if a["pax_25_q14"]>0 else None
-        subregions.append({
-            "name": s, "city_count": len(cities),
-            "pax_25": a["pax_25"], "pax_25_q14": a["pax_25_q14"], "pax_26_q14": a["pax_26_q14"],
-            "yoy": yoy, "months_25": a["months_25"], "months_26": a["months_26"], "cities": cities
-        })
-
-    return {
-        "team": china, "subregions": subregions,
-        "total_25": china["pax_25"], "total_yoy": china["yoy"]
-    }
 
 # =============================================================================
 # 4) HTML 데이터 라인 교체
