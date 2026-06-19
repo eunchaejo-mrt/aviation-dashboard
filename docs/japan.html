@@ -155,7 +155,7 @@
   <div style="margin-top:12px;">
     <a href="./index.html" style="display:inline-block;padding:6px 14px;margin-right:8px;background:#E8F4FD;color:#3A95DD;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">← 메인 대시보드</a>
     <a href="./share.html" style="display:inline-block;padding:6px 14px;margin-right:8px;background:#FFF7D6;color:#7A5A00;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">📊 점유율 →</a>
-    <a href="./share-china.html" style="display:inline-block;padding:6px 14px;margin-right:8px;background:#FFF0EE;color:#FA5B4A;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">🐼 중화권 점유율 →</a>
+    <a href="./share-china.html" style="display:inline-block;padding:6px 14px;margin-right:8px;background:#FFF0EE;color:#FA5B4A;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">🐼 일본 점유율 →</a>
     <a href="./kto.html" style="display:inline-block;padding:6px 14px;margin-right:8px;background:#E8F4FD;color:#3A95DD;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">🏛 KTO 통계 →</a>
   </div>
   <div class="hero-banner">
@@ -168,20 +168,20 @@
 <div class="grid">
   <!-- 월별 추이 -->
   <div class="card col-12">
-    <h2>중화권 전체 월별 여객 추이</h2>
+    <h2>일본 전체 월별 여객 추이</h2>
     <div class="desc">25년 12개월 + 26년 1~4월. 26년 매월 25년 동월 대비 +13~+22% 가속.</div>
     <div class="chart-box tall"><canvas id="trendChart"></canvas></div>
   </div>
 
   <!-- 서브카테고리 -->
   <div class="card col-6">
-    <h2>중화권 내 권역별 점유율 (2025)</h2>
-    <div class="desc">중국 본토가 60%로 절대 비중. 대만·홍콩·싱가포르가 따름.</div>
+    <h2>일본 내 권역별 점유율 (2025)</h2>
+    <div class="desc">일본가 60%로 절대 비중. 대만·홍콩·싱가포르가 따름.</div>
     <div class="chart-box"><canvas id="subDonut"></canvas></div>
   </div>
   <div class="card col-6">
     <h2>권역별 YoY 성장률 (26년 1~4월 vs 25년 1~4월)</h2>
-    <div class="desc">중국 본토 폭발 성장 / 싱가포르만 하락</div>
+    <div class="desc">일본 폭발 성장 / 싱가포르만 하락</div>
     <div class="chart-box"><canvas id="subYoY"></canvas></div>
   </div>
 </div>
@@ -189,16 +189,16 @@
 <!-- 권역별 섹션 -->
 <div id="subSections"></div>
 
-<!-- 중국 본토 도시 Top 분석 -->
+<!-- 일본 도시 Top 분석 -->
 <div class="card col-12" style="margin-top:24px;">
-  <h2>🚀 중국 본토 — YoY 성장률 Top 20 (26 1~4월 vs 25 1~4월)</h2>
+  <h2>🚀 일본 — YoY 성장률 Top 20 (26 1~4월 vs 25 1~4월)</h2>
   <div class="desc">한-중 무비자 효과 정량화. 25년 1~4월 1만명 이상 도시만.</div>
   <div class="chart-box tall"><canvas id="growthChart"></canvas></div>
 </div>
 
 <!-- 전체 도시 테이블 -->
 <div class="card col-12" style="margin-top:16px;">
-  <h2>중화권 도시 전체 데이터 (57개)</h2>
+  <h2>일본 도시 전체 데이터 (57개)</h2>
   <div class="desc">정렬·검색 가능. 다공항 도시는 통합 표시 (예: 상하이 PVG·SHA).</div>
   <input type="text" class="search" id="citySearch" placeholder="도시·IATA·권역 검색..."/>
   <div class="table-wrap"><table class="cities" id="cityTable"></table></div>
@@ -224,7 +224,7 @@ Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
 
 const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 const SUB_COLORS = {
-  "중국 본토":"#FA5B4A", "홍콩":"#F78000", "대만":"#33B893",
+  "일본":"#FA5B4A", "홍콩":"#F78000", "대만":"#33B893",
   "마카오":"#8238FA", "싱가포르":"#51ABF3"
 };
 
@@ -234,10 +234,10 @@ const peak25 = MONTHS.map((m,i)=>({month:i+1,pax:t.months_25[i]})).reduce((a,b)=
 const low25 = MONTHS.map((m,i)=>({month:i+1,pax:t.months_25[i]})).reduce((a,b)=>a.pax<b.pax?a:b);
 const mainland = DATA.team;  
 const kpis = [
-  {label:'중화권 25년 여객', value:fmtShort(t.pax_25), unit:'명', delta:`도시 ${t.city_count}개`, cls:'dim', hero:true},
+  {label:'일본 25년 여객', value:fmtShort(t.pax_25), unit:'명', delta:`도시 ${t.city_count}개`, cls:'dim', hero:true},
   {label:'26년 1~4월 YoY', value:`${t.yoy>=0?'+':''}${t.yoy.toFixed(1)}`, unit:'%', delta:`${fmtShort(t.pax_25_q14)} → ${fmtShort(t.pax_26_q14)}`, cls:t.yoy>=0?'up':'down', hero:true},
-  {label:'중국 본토 YoY', value:`${mainland.yoy>=0?'+':''}${mainland.yoy.toFixed(1)}`, unit:'%', delta:`${mainland.city_count}개 도시`, cls:'up', hero:true},
-  {label:'중국 본토 25년', value:fmtShort(mainland.pax_25), unit:'명', delta:`전체의 ${(mainland.pax_25/t.pax_25*100).toFixed(1)}%`, cls:'dim'},
+  {label:'일본 YoY', value:`${mainland.yoy>=0?'+':''}${mainland.yoy.toFixed(1)}`, unit:'%', delta:`${mainland.city_count}개 도시`, cls:'up', hero:true},
+  {label:'일본 25년', value:fmtShort(mainland.pax_25), unit:'명', delta:`전체의 ${(mainland.pax_25/t.pax_25*100).toFixed(1)}%`, cls:'dim'},
   {label:'최성수기', value:`${peak25.month}`, unit:'월', delta:`${fmtShort(peak25.pax)}명`, cls:'dim'},
   {label:'최비수기', value:`${low25.month}`, unit:'월', delta:`${fmtShort(low25.pax)}명`, cls:'dim'},
 ];
@@ -399,7 +399,7 @@ DATA.subregions.forEach((sub, si) => {
     const mark = m<=4 ? ' <span style="color:#ffd06b">●</span>' : '';
     cells.push(`<div class="h-head">${m}월${mark}</div>`);
   }
-  const subHue = {"중국 본토":348,"홍콩":40,"대만":135,"마카오":270,"싱가포르":190}[sub.name] || 340;
+  const subHue = {"일본":348,"홍콩":40,"대만":135,"마카오":270,"싱가포르":190}[sub.name] || 340;
   sub.cities.forEach(c => {
     const max = Math.max(...c.months_25);
     const min = Math.min(...c.months_25);
@@ -431,7 +431,7 @@ DATA.subregions.forEach((sub, si) => {
   hm.innerHTML = cells.join('');
 });
 
-// ===== 중국 본토 성장 Top 20 =====
+// ===== 일본 성장 Top 20 =====
 const ml = DATA.team;   
 const growth = ml.cities.filter(c=>c.yoy!==null && c.pax_25_q14>10000)
   .sort((a,b)=>b.yoy-a.yoy).slice(0,20);
