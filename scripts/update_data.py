@@ -401,7 +401,10 @@ def build_china(main_data):
       }
 
       return {
-          "team": japan_data, "subregions": [],
+          "team": japan_data, "subregions": [ [{"name":"일본 주요                                      
+  도시","city_count":len(cities),"pax_25":total_25,"pax_25_q14":total_25_q14,"pax_26_q14":total
+  _26_q14,"yoy":yoy,"months_25":months_25,"months_26":months_26,"cities":japan_data["cities"]}]
+],
           "total_25": total_25, "total_yoy": yoy
       }
 
