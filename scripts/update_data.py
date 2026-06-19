@@ -13,7 +13,7 @@
      파일명의 (n) = n월 (그대로 두면 됨)
   3. 이 스크립트 실행:
         python3 scripts/update_data.py
-  4. docs/index.html, docs/china.html 자동 갱신됨.
+  4. docs/index.html, docs/japan.html 자동 갱신됨.
   5. git commit + push → GitHub Pages 자동 배포.
 """
 
@@ -374,7 +374,7 @@ def aggregate(iata_master, iata_month):
 # =============================================================================
 # 3) 중국 데이터 분리
 # =============================================================================
- def build_china(main_data):
+def build_china(main_data):
       # 일본 6개 도시만 추출 (도쿄, 삿포로, 오사카, 후쿠오카, 오키나와, 나고야)
       ALLOWED_IATA = {"NRT","HND","CTS","KIX","ITM","FUK","OKA","NGO","NKM"}
       japan = next((t for t in main_data["teams"] if t["team"]=="Japan"), None)
@@ -452,13 +452,13 @@ def main():
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     (PROCESSED_DIR / "main.json").write_text(json.dumps(main_data, ensure_ascii=False, indent=2), encoding='utf-8')
     if china_data:
-        (PROCESSED_DIR / "china.json").write_text(json.dumps(china_data, ensure_ascii=False, indent=2), encoding='utf-8')
+        (PROCESSED_DIR / "japan.json").write_text(json.dumps(china_data, ensure_ascii=False, indent=2), encoding='utf-8')
     print(f"\n💾 JSON 저장: {PROCESSED_DIR}")
 
     # HTML 업데이트
     update_html(DOCS_DIR / "index.html", main_data)
     if china_data:
-        update_html(DOCS_DIR / "china.html", china_data)
+        update_html(DOCS_DIR / "japan.html", china_data)
 
     # 요약 출력
     print("\n" + "=" * 60)
