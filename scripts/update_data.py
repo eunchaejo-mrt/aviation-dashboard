@@ -73,6 +73,7 @@ METRO_MAP = {
     "NRT":("Tokyo","도쿄"), "HND":("Tokyo","도쿄"),
     "KIX":("Osaka","오사카"), "ITM":("Osaka","오사카"),
     "NGO":("Nagoya","나고야"), "NKM":("Nagoya","나고야"),
+    "CTS":("Sapporo","삿포로"), "FUK":("Fukuoka","후쿠오카"), "OKA":("Okinawa","오키나와"),  
     "BKK":("Bangkok","방콕"), "DMK":("Bangkok","방콕"),
     "ULN":("Ulaanbaatar","울란바토르"), "UBN":("Ulaanbaatar","울란바토르"),
     "KLO":("Boracay","보라카이"), "MPH":("Boracay","보라카이"),
@@ -401,7 +402,7 @@ def build_china(main_data):
       }
 
       return {
-          "team": japan_data, "subregions": [{"name":"일본 주요 도시","city_count":len(cities),"pax_25":total_25,"pax_25_q14":total_25_q14,"pax_26_q14":total_26_q14,"yoy":yoy,"months_25":months_25,"months_26":months_26,"cities":japan_data["cities"]}],
+          "team": japan_data, "subregions": [{"name":c["name"],"city_count":1,"pax_25":c["pax_25"],"pax_25_q14":c["pax_25_q14"],"pax_26_q 14":c["pax_26_q14"],"yoy":c["yoy"],"months_25":c["months_25"],"months_26":c["months_26"],"cities":[c]} for c in japan_data["cities"]] ,
           "total_25": total_25, "total_yoy": yoy
       }
 
