@@ -167,11 +167,16 @@
 
 <div class="grid">
   <!-- 월별 추이 -->
-  <div class="card col-12">
+  <div class="card col-8"> 
     <h2>일본 전체 월별 여객 추이</h2>
     <div class="desc">25년 12개월 + 26년 1~4월. 26년 매월 25년 동월 대비 +13~+22% 가속.</div>
     <div class="chart-box tall"><canvas id="trendChart"></canvas></div>
   </div>
+
+      <div class="card col-4">              
+      <h2>도시별 여객 (25년)</h2>                                                                                         
+      <div class="chart-box tall"><canvas id="cityBarChart"></canvas></div>                                               
+    </div> 
 
   <!-- 서브카테고리 -->
   <div class="card col-6">
@@ -271,6 +276,27 @@ new Chart(document.getElementById('trendChart'), {
     scales:{y:{ticks:{callback:v=>fmtShort(v)}}}
   }
 });
+
+  new Chart(document.getElementById('cityBarChart'), {                                                                    
+    type: 'bar',                                                 
+    data: {                                                                                                               
+      labels: DATA.team.cities.map(c => c.name),           
+      datasets: [{                                                                                                        
+        data: DATA.team.cities.map(c => c.pax_25),                                                                        
+        backgroundColor: DATA.team.cities.map(c => SUB_COLORS[c.name] || '#51ABF3'),
+        borderRadius: 4                                                                                                   
+      }]                                                                                                                
+    },                                                     
+    options: {                                                                                                            
+      indexAxis: 'y',                                                                                                   
+      responsive: true,                                                                                                   
+      maintainAspectRatio: false,                                
+      plugins: {legend: {display: false},                                                                                 
+        tooltip: {callbacks: {label: c => `${fmt(c.parsed.x)}명`}}
+      },                                                                                                                  
+      scales: {x: {ticks: {callback: v => fmtShort(v)}}}         
+    }                                                      
+  });                                                                  
 
 // ===== 서브카테고리 도넛 + YoY =====
 new Chart(document.getElementById('subDonut'), {
