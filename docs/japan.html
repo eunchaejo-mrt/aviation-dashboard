@@ -330,7 +330,7 @@ DATA.subregions.forEach((sub, si) => {
             <div class="chart-box"><canvas id="subTrend_${si}"></canvas></div>
           </div>
           <div class="card col-6" style="background:var(--panel-2);">
-            <h2 style="font-size:14px;">도시별 여객 (전체 ${sub.city_count}개)</h2>
+            <h2 style="font-size:14px;">월별 여객 (25 vs 26 YoY)</h2>
             <div class="bar-list" id="subBars_${si}"></div>
           </div>
           <div class="card col-12" style="background:var(--panel-2);">
@@ -375,21 +375,22 @@ DATA.subregions.forEach((sub, si) => {
     }
   });
 
-  // 도시별 막대 (전체)
-  const maxPax = sub.cities[0]?.pax_25 || 1;
-  const bars = sub.cities.map(c => {
-    const w = (c.pax_25/maxPax*100).toFixed(1);
-    const ycls = c.yoy===null?'dim':(c.yoy>=0?'up':'down');
-    const ystr = c.yoy===null?'N/A':`${c.yoy>=0?'+':''}${c.yoy.toFixed(0)}%`;
-    const codeLabel = c.codes.length>1?'['+c.codes.join('·')+']':c.codes[0];
-    return `<div class="bar-row">
-      <div class="name">${c.name}<span class="code">${codeLabel}</span></div>
-      <div class="bar"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
-      <div class="pax">${fmtShort(c.pax_25)}</div>
-      <div class="yoy-cell ${ycls}">${ystr}</div>
-    </div>`;
-  }).join('');
-  document.getElementById(`subBars_${si}`).innerHTML = bars;
+    // 월별 막대                                                                                                                                        
+    const maxPax = Math.max(...sub.months_25, 1);                                                                                                     
+    const bars = sub.months_25.map((v, mi) => {                                                                                                         
+      const w = (v/maxPax*100).toFixed(1);                       
+      const v26 = sub.months_26[mi];                       
+      const yoy = (v26!==undefined && v>0) ? ((v26-v)/v*100) : null;                                                                                    
+      const ycls = yoy===null?'dim':(yoy>=0?'up':'down');                                                                                             
+      const ystr = yoy===null?'-':`${yoy>=0?'+':''}${yoy.toFixed(0)}%`;                                                                                 
+      return `<div class="bar-row">                                                                                                                     
+        <div class="name">${mi+1}월</div>                  
+        <div class="bar"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>                                                     
+        <div class="pax">${fmtShort(v)}</div>                                                                                                           
+        <div class="yoy-cell ${ycls}">${ystr}</div>                                                                                                     
+      </div>`;                                                                                                                                          
+    }).join('');                                                                                                                                        
+    document.getElementById(`subBars_${si}`).innerHTML = bars;
 
   // 히트맵
   const hm = document.getElementById(`subHeat_${si}`);
