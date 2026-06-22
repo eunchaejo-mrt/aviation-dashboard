@@ -2375,13 +2375,13 @@
           ]
         },
         {
-          "id": "FUK",
+          "id": "Fukuoka",
           "name": "후쿠오카",
           "codes": [
             "FUK"
           ],
           "team": "Japan",
-          "is_metro": false,
+          "is_metro": true,
           "pax_25": 1690957,
           "pax_25_q14": 741316,
           "pax_26_q14": 766273,
@@ -2412,13 +2412,13 @@
           ]
         },
         {
-          "id": "CTS",
-          "name": "삿보로(치토세)",
+          "id": "Sapporo",
+          "name": "삿포로",
           "codes": [
             "CTS"
           ],
           "team": "Japan",
-          "is_metro": false,
+          "is_metro": true,
           "pax_25": 643711,
           "pax_25_q14": 237954,
           "pax_26_q14": 253574,
@@ -2486,13 +2486,13 @@
           ]
         },
         {
-          "id": "OKA",
-          "name": "오끼나와",
+          "id": "Okinawa",
+          "name": "오키나와",
           "codes": [
             "OKA"
           ],
           "team": "Japan",
-          "is_metro": false,
+          "is_metro": true,
           "pax_25": 427642,
           "pax_25_q14": 186774,
           "pax_26_q14": 200499,
@@ -7535,13 +7535,13 @@
       ]
     },
     {
-      "id": "FUK",
+      "id": "Fukuoka",
       "name": "후쿠오카",
       "codes": [
         "FUK"
       ],
       "team": "Japan",
-      "is_metro": false,
+      "is_metro": true,
       "pax_25": 1690957,
       "pax_25_q14": 741316,
       "pax_26_q14": 766273,
@@ -7946,13 +7946,13 @@
       ]
     },
     {
-      "id": "CTS",
-      "name": "삿보로(치토세)",
+      "id": "Sapporo",
+      "name": "삿포로",
       "codes": [
         "CTS"
       ],
       "team": "Japan",
-      "is_metro": false,
+      "is_metro": true,
       "pax_25": 643711,
       "pax_25_q14": 237954,
       "pax_26_q14": 253574,
@@ -8131,13 +8131,13 @@
       ]
     },
     {
-      "id": "OKA",
-      "name": "오끼나와",
+      "id": "Okinawa",
+      "name": "오키나와",
       "codes": [
         "OKA"
       ],
       "team": "Japan",
-      "is_metro": false,
+      "is_metro": true,
       "pax_25": 427642,
       "pax_25_q14": 186774,
       "pax_26_q14": 200499,
